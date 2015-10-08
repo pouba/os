@@ -6,6 +6,7 @@ node* node_create(char* name, node* parent) {
 	node* ret = (node*)malloc(sizeof node);
 
 	ret->name = name;
+	ret->name_len = strnlen_s(name, sizeof (char) * 50);
 
 	ret->content = NULL;
 	ret->content_len = 0;
@@ -15,6 +16,9 @@ node* node_create(char* name, node* parent) {
 
 	if (parent != NULL) {
 		node_add_to_dir(parent, ret);
+	}
+	else {
+		ret->parent = NULL;
 	}
 
 	return ret;
