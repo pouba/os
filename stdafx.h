@@ -11,8 +11,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <tchar.h>
+#include <windows.h>
 
 
 #include "node.h"
+#include "pipe.h"
+#include "stdReadWriteUtils.h"
+#include "cmd.h"
 
 // TODO: reference additional headers your program requires here
