@@ -12,7 +12,7 @@
 #include <string.h>
 #include <tchar.h>
 #include <windows.h>
-
+#include <conio.h>
 
 #include "node.h"
 #include "pipe.h"
