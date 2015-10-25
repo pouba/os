@@ -23,10 +23,10 @@ void c_run(LPTHREAD_START_ROUTINE f, run_params* params) {
 	// THREAD
 	HANDLE thread = CreateThread(NULL, 0, f, params, 0, NULL);
 
-	//CLEANUP
-
 	//WAIT
 	WaitForSingleObject(thread, INFINITE);
+
+	//CLEANUP
 }
 
 int parse_cmd(char* cmd, run_params* par);
@@ -35,10 +35,10 @@ void get_path(node* node, char* path, int* position);
 
 int isTextPresent(char* src, int pos, char* target);
 
-
 void dir(run_params* par);
 void echo(run_params* par);
 void scan(run_params* par);
+void random(run_params* par);
 
 void c_cmd_run(run_params* params) {
 	
@@ -197,7 +197,7 @@ int isTextPresent(char* src, int pos, char* target) {
 }
 
 int parse_cmd(char* cmd, run_params* par) {
-	int pos, p_pos, i;
+	int pos, i;
 
 	char* cmd_itself = (char*)malloc(sizeof(char) * MAX_CMD_LEN);
 	char* input = (char*)malloc(sizeof(char) * MAX_PATH_LEN);
@@ -224,8 +224,6 @@ int parse_cmd(char* cmd, run_params* par) {
 		ret = fill_string(cmd, &pos, arg);
 		if (ret != 0) break;
 
-		printf("** %s\n", arg);
-
 		if (strcmp(arg, STR_REDIRECT_IN) == 0) {
 			ret = fill_string(cmd, &pos, arg);
 			if (ret != 0) break;
@@ -249,37 +247,43 @@ int parse_cmd(char* cmd, run_params* par) {
 			strcpy_s(err_output, MAX_PATH_LEN, arg);
 		}
 		else {
+			if (argc >= MAX_ARGC) {
+				return 2;
+			}
+
 			args[argc] = arg;
 			argc++;
 			arg = (char*)malloc(sizeof(char) * MAX_PARAM_LEN);
 		}
 	}
 
-	printf("CMD: %s\n", cmd_itself);
-	printf("Out [%s]: %s\n", out_append ? "YES" : "NO", output);
-	printf("In: %s\n", input);
-	printf("Err: %s\n", err_output);
-	printf("Argc: %d\n", argc);
-	for (i = 0; i < argc; i++) {
-		printf(" %d. arg: %s\n", i, args[i]);
-	}
+	run_params* nParams = (run_params*) malloc(sizeof(run_params));
+	nParams->in = par->in;
+	nParams->out = par->out;
+	nParams->err = par->err;
 
+	nParams->start_node = par->start_node;
+	nParams->cmd_name = cmd_itself;
 
+	nParams->argc = argc;
+	nParams->args = args;
 
-	/*
-	if (strcmp(cmd, "exit") == 0) {
+	if (strcmp(cmd_itself, "exit") == 0) {
 		return 1;
 	}
-	else if (strcmp(cmd, "dir") == 0) {
-		c_run((LPTHREAD_START_ROUTINE)(dir), par);
+	else if (strcmp(cmd_itself, "dir") == 0) {
+		c_run((LPTHREAD_START_ROUTINE)(dir), nParams);
 	}
-	else if (strcmp(cmd, "echo") == 0) {
-		c_run((LPTHREAD_START_ROUTINE)(echo), par);
+	else if (strcmp(cmd_itself, "echo") == 0) {
+		c_run((LPTHREAD_START_ROUTINE)(echo), nParams);
 	}
-	else if (strcmp(cmd, "scan") == 0) {
-		c_run((LPTHREAD_START_ROUTINE)(scan), par);
+	else if (strcmp(cmd_itself, "scan") == 0) {
+		c_run((LPTHREAD_START_ROUTINE)(scan), nParams);
 	}
-	*/
+	else if (strcmp(cmd_itself, "rand") == 0) {
+		c_run((LPTHREAD_START_ROUTINE)(random), nParams);
+	}
+
 	return 0;
 }
 
@@ -297,6 +301,17 @@ void dir(run_params* par) {
 void echo(run_params* par) {
 	pipe_write_s(par->out, "out\n");
 	pipe_write_s(par->err, "err\n");
+}
+
+void random(run_params* par) {
+	while (true) {
+		int c = pipe_read_non_blocking(par->in);
+		if (c == 65) break;
+
+		pipe_write_s(par->out, "AAA\n");
+	}
+
+
 }
 
 void scan(run_params* par) {
