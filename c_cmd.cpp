@@ -310,8 +310,6 @@ void random(run_params* par) {
 
 		pipe_write_s(par->out, "AAA\n");
 	}
-
-
 }
 
 void scan(run_params* par) {
