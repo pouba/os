@@ -40,6 +40,7 @@ void dir(run_params* par);
 void echo(run_params* par);
 void scan(run_params* par);
 void random(run_params* par);
+void cd(run_params* par);
 
 void c_cmd_run(run_params* params) {
 	
@@ -283,6 +284,9 @@ int parse_cmd(char* cmd, run_params* par) {
 	else if (strcmp(cmd_itself, "rand") == 0) {
 		c_run((LPTHREAD_START_ROUTINE)(random), nParams);
 	}
+	else if (strcmp(cmd_itself, "cd") == 0) {
+		c_run((LPTHREAD_START_ROUTINE)(cd), nParams);
+	}
 
 	return 0;
 }
@@ -295,6 +299,15 @@ void dir(run_params* par) {
 	for (i = 0; i < max; i++) {
 		pipe_write_s(par->out, listDir[i]->name);
 		pipe_write_s(par->out, "\n");
+	}
+}
+
+void cd(run_params* par) {
+	char* filename = par->args[0];
+	node* n = get_node_by_name(par->start_node, filename);
+
+	if (n != NULL) {
+		pipe_write_s(par->out, "found");
 	}
 }
 

@@ -34,6 +34,6 @@ int main()
 	WaitForSingleObject(h_out, INFINITE);
 	WaitForSingleObject(h_err, INFINITE);
 	TerminateThread(h_in, 0); // needs to be terminated, otherwise would wait for input forever
-
+	
     return 0;
 }
