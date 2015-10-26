@@ -18,9 +18,9 @@ int main()
 	pipe* out = pipe_create();
 	pipe* err = pipe_create();
 
-	stdReader_run(in);
-	stdWritter_run(out);
-	stdWritter_run(err);
+	HANDLE h_in = std_reader_run(in);
+	HANDLE h_out = std_writter_run(out);
+	HANDLE h_err = std_writter_run(err);
 
 	run_params par;
 	par.cmd_name = "cmd\0";
@@ -30,6 +30,10 @@ int main()
 	par.start_node = root;
 
 	c_run( (LPTHREAD_START_ROUTINE) c_cmd_run, &par);
+
+	WaitForSingleObject(h_out, INFINITE);
+	WaitForSingleObject(h_err, INFINITE);
+	TerminateThread(h_in, 0); // needs to be terminated, otherwise would wait for input forever
 
     return 0;
 }

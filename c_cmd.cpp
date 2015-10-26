@@ -11,9 +11,9 @@
 #define STR_REDIRECT_OUT_APP ">>"
 #define STR_REDIRECT_ERR "2>"
 
-#define CMD_END_CHAR 59
+#define CMD_END_CHAR ';'
 #define CMD_END_CHAR_LINE 10
-#define CMD_END_CONCURRENT_CHAR 38
+#define CMD_END_CONCURRENT_CHAR '&'
 
 #define CMD_PATH_CMD_SEPARATOR " # "
 
@@ -27,11 +27,12 @@ void c_run(LPTHREAD_START_ROUTINE f, run_params* params) {
 	WaitForSingleObject(thread, INFINITE);
 
 	//CLEANUP
+	pipe_write(params->out, -1);
+	pipe_write(params->err, -1);
 }
 
 int parse_cmd(char* cmd, run_params* par);
 int parse_line(char* line, run_params* par);
-void get_path(node* node, char* path, int* position);
 
 int isTextPresent(char* src, int pos, char* target);
 
@@ -52,13 +53,7 @@ void c_cmd_run(run_params* params) {
 	pipe* err = params->err;
 
 	node *act = params->start_node;
-	/*
-	int position = 0;
-	get_path(act, path, &position);
-	pipe_write_s(out, path);
-	pipe_write_s(out, CMD_PATH_CMD_SEPARATOR);
-	*/
-	i = 0;
+
 	int pos = 0;
 	while (true) {
 		c = pipe_read(in);
@@ -73,6 +68,7 @@ void c_cmd_run(run_params* params) {
 			int ret = parse_line(line, params);
 			if (ret == 1) break;
 			pos = 0;
+			if (c == -1) break;
 		}
 		else {
 			line[pos] = c;
@@ -269,6 +265,10 @@ int parse_cmd(char* cmd, run_params* par) {
 	nParams->args = args;
 
 	if (strcmp(cmd_itself, "exit") == 0) {
+		pipe_set_auto_close(par->out, 1);
+		pipe_set_auto_close(par->err, 1);
+		pipe_write(par->out, -1);
+		pipe_write(par->err, -1);
 		return 1;
 	}
 	else if (strcmp(cmd_itself, "dir") == 0) {
@@ -328,14 +328,4 @@ void scan(run_params* par) {
 	}
 
 
-}
-
-void get_path(node* node, char* path, int* position) {
-	if (node->parent != NULL) {
-		get_path(node->parent, path, position);
-	}
-	strncpy_s(path + (sizeof(char) * (*position)), 200 - (*position), node->name, node->name_len);
-	path[*position + node->name_len] = '/';
-	path[*position + node->name_len + 1] = '\0';
-	(*position) += node->name_len + 1;
 }

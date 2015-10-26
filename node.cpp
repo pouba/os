@@ -11,6 +11,9 @@ node* node_create(char* name, node* parent) {
 	ret->content = NULL;
 	ret->content_len = 0;
 
+	InitializeCriticalSection(&(ret->file_lock));
+	ret->locked = 0;
+
 	ret->dirEntries = NULL;
 	ret->entries_count = 0;
 
@@ -22,6 +25,26 @@ node* node_create(char* name, node* parent) {
 	}
 
 	return ret;
+}
+
+int node_try_lock(node* node) {
+	int ret;
+	EnterCriticalSection(&(node->file_lock));
+	if (node->locked) {
+		ret = 0;
+	}
+	else {
+		node->locked = 1;
+		ret = 1;
+	}
+	LeaveCriticalSection(&(node->file_lock));
+	return ret;
+}
+
+void node_unlock(node* node) {
+	EnterCriticalSection(&(node->file_lock));
+	node->locked = 0;
+	LeaveCriticalSection(&(node->file_lock));
 }
 
 int node_set_content(node* node, char* content, int content_len) {

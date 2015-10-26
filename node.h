@@ -11,6 +11,9 @@ typedef struct node_s {
 
 	node_s* parent;
 
+	CRITICAL_SECTION file_lock;
+	int locked;
+
 	char* content;
 	int content_len;
 
@@ -26,5 +29,8 @@ char* node_get_content(node* node);
 int node_add_to_dir(node* dir, node* child);
 node** node_get_entries(node* dir);
 int node_get_entries_count(node* dir);
+
+int node_try_lock(node* node);
+void node_unlock(node* node);
 
 #endif
