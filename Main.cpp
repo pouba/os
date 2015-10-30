@@ -15,34 +15,34 @@ int main()
 	node* n5b = node_create("n5b", n5);
 
 	char* str = "n1 - aaaaaa";
-	n1->content = (char*)malloc(sizeof(char) * strlen(str));
+	n1->content = (char*)malloc(sizeof(char) * strlen(str)+1);
 	memcpy(n1->content, str, strlen(str)+1);
 	n1->content_len = strlen(n1->content);
 
 	str = "n2 - 4546456";
-	n2->content = (char*)malloc(sizeof(char) * strlen(str));
+	n2->content = (char*)malloc(sizeof(char) * strlen(str)+1);
 	memcpy(n2->content, str, strlen(str)+1);
 	n2->content_len = strlen(n2->content);
 
 	str = "n3 - ,m,mkjhseursjagfjhsdhj";
-	n3->content = (char*)malloc(sizeof(char) * strlen(str));
+	n3->content = (char*)malloc(sizeof(char) * strlen(str)+1);
 	memcpy(n3->content, str, strlen(str)+1);
 	n3->content_len = strlen(n3->content);
 
 	str = "n4 - yighjgjhgfyufyt";
-	n4->content = (char*)malloc(sizeof(char) * strlen(str));
+	n4->content = (char*)malloc(sizeof(char) * strlen(str)+1);
 	memcpy(n4->content, str, strlen(str) + 1);
 	n4->content_len = strlen(n4->content);
 
 
 
 	str = "n5a - 45455";
-	n5a->content = (char*)malloc(sizeof(char) * strlen(str));
+	n5a->content = (char*)malloc(sizeof(char) * strlen(str)+1);
 	memcpy(n5a->content, str, strlen(str) + 1);
 	n5a->content_len = strlen(n5a->content);
 
 	str = "n5b - 1010";
-	n5b->content = (char*)malloc(sizeof(char) * strlen(str));
+	n5b->content = (char*)malloc(sizeof(char) * strlen(str)+1);
 	memcpy(n5b->content, str, strlen(str) + 1);
 	n5b->content_len = strlen(n5b->content);
 
