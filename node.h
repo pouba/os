@@ -4,6 +4,8 @@
 
 #include "stdafx.h"
 
+#define FILE_SEPARATOR '\\'
+
 typedef struct node_s {
 
 	char* name;

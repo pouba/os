@@ -1,22 +1,5 @@
 #include "stdafx.h"
 
-#define MAX_CMD_LEN 300
-#define MAX_PARAM_LEN 300
-#define MAX_LINE_LEN 1000
-#define MAX_PATH_LEN 200
-#define MAX_ARGC 20
-
-#define STR_REDIRECT_OUT ">"
-#define STR_REDIRECT_IN "<"
-#define STR_REDIRECT_OUT_APP ">>"
-#define STR_REDIRECT_ERR "2>"
-
-#define CMD_END_CHAR ';'
-#define CMD_END_CHAR_LINE 10
-#define CMD_END_CONCURRENT_CHAR '&'
-
-#define CMD_PATH_CMD_SEPARATOR " # "
-
 void c_run(LPTHREAD_START_ROUTINE f, run_params* params) {
 	// INIT
 
@@ -34,13 +17,19 @@ void c_run(LPTHREAD_START_ROUTINE f, run_params* params) {
 int parse_cmd(char* cmd, run_params* par);
 int parse_line(char* line, run_params* par);
 
+int parse_redirects(char* cmd, int* pos, char* arg, char* in, char* out, char* err, int* app);
 int isTextPresent(char* src, int pos, char* target);
+
+run_params* make_params(run_params* parent_par, char* in, char* out, char* err, int app, char** args, int argc, char* cmd_name);
 
 void dir(run_params* par);
 void echo(run_params* par);
 void scan(run_params* par);
 void random(run_params* par);
 void cd(run_params* par);
+void tree(run_params* par);
+void tree_list(node* n, int* spaces, run_params* par);
+void c_pipe(run_params* par);
 
 void c_cmd_run(run_params* params) {
 	
@@ -190,7 +179,7 @@ int isTextPresent(char* src, int pos, char* target) {
 		if (src[pos + i] != target[i]) return 0;
 	}
 
-	return 1;
+return 1;
 }
 
 int parse_cmd(char* cmd, run_params* par) {
@@ -211,7 +200,6 @@ int parse_cmd(char* cmd, run_params* par) {
 	char* arg = (char*)malloc(sizeof(char) * MAX_PARAM_LEN);
 	int argc = 0;
 
-
 	pos = 0;
 	int ret;
 	ret = fill_string(cmd, &pos, cmd_itself);
@@ -221,27 +209,8 @@ int parse_cmd(char* cmd, run_params* par) {
 		ret = fill_string(cmd, &pos, arg);
 		if (ret != 0) break;
 
-		if (strcmp(arg, STR_REDIRECT_IN) == 0) {
-			ret = fill_string(cmd, &pos, arg);
-			if (ret != 0) break;
-			strcpy_s(input, MAX_PATH_LEN, arg);
-		}
-		else if (strcmp(arg, STR_REDIRECT_OUT) == 0) {
-			ret = fill_string(cmd, &pos, arg);
-			if (ret != 0) break;
-			out_append = 0;
-			strcpy_s(output, MAX_PATH_LEN, arg);
-		}
-		else if (strcmp(arg, STR_REDIRECT_OUT_APP) == 0) {
-			ret = fill_string(cmd, &pos, arg);
-			if (ret != 0) break;
-			out_append = 1;
-			strcpy_s(output, MAX_PATH_LEN, arg);
-		}
-		else if (strcmp(arg, STR_REDIRECT_ERR) == 0) {
-			ret = fill_string(cmd, &pos, arg);
-			if (ret != 0) break;
-			strcpy_s(err_output, MAX_PATH_LEN, arg);
+		if (parse_redirects(cmd, &pos, arg, input, output, err_output, &out_append) != 0) {
+			break;
 		}
 		else {
 			if (argc >= MAX_ARGC) {
@@ -254,16 +223,8 @@ int parse_cmd(char* cmd, run_params* par) {
 		}
 	}
 
-	run_params* nParams = (run_params*) malloc(sizeof(run_params));
-	nParams->in = par->in;
-	nParams->out = par->out;
-	nParams->err = par->err;
-
-	nParams->start_node = par->start_node;
-	nParams->cmd_name = cmd_itself;
-
-	nParams->argc = argc;
-	nParams->args = args;
+	run_params* nParams = make_params(par, input, output, err_output, out_append, args, argc, cmd_itself);
+	if (nParams == NULL) return 3;
 
 	if (strcmp(cmd_itself, "exit") == 0) {
 		pipe_set_auto_close(par->out, 1);
@@ -287,6 +248,118 @@ int parse_cmd(char* cmd, run_params* par) {
 	else if (strcmp(cmd_itself, "cd") == 0) {
 		c_run((LPTHREAD_START_ROUTINE)(cd), nParams);
 	}
+	else if (strcmp(cmd_itself, "tree") == 0) {
+		c_run((LPTHREAD_START_ROUTINE)(tree), nParams);
+	}
+	else if (strcmp(cmd_itself, "pipe") == 0) {
+		c_run((LPTHREAD_START_ROUTINE)(c_pipe), nParams);
+	}
+
+	return 0;
+}
+
+run_params* make_params(run_params* parent_par, char* in, char* out, char* err, int app, char** args, int argc, char* cmd_name) {
+	run_params* nParams = (run_params*)malloc(sizeof(run_params));
+
+	nParams->in = parent_par->in;
+	nParams->out = parent_par->out;
+	nParams->err = parent_par->err;
+
+	nParams->start_node = parent_par->start_node;
+	nParams->root_node = parent_par->root_node;
+	nParams->cmd_name = cmd_name;
+
+	nParams->argc = argc;
+	nParams->args = args;
+
+	if (in[0] != '\0') {
+		node* node_in = get_node_by_relative_path(nParams->start_node, in);
+		if (node_in == NULL) {
+			printf("File not found!\n");
+			return NULL;
+		}
+		else {
+			// open file
+			if (node_try_lock(node_in)) {
+				pipe* p = pipe_create();
+				file_reader_run(p, node_in);
+				nParams->in = p;
+			}
+			else {
+				printf("Can not open the file.\n");
+				return NULL;
+			}
+		}
+	}
+	if (out[0] != '\0') {
+		node* node_out = get_node_by_relative_path(nParams->start_node, out);
+		if (node_out == NULL) {
+			printf("File not found!\n");
+			return NULL;
+		}
+		else {
+			// open file
+			if (node_try_lock(node_out)) {
+				pipe* p = pipe_create();
+				file_writter_run(p, node_out);
+				nParams->out = p;
+			}
+			else {
+				printf("Can not open the file.\n");
+			}
+		}
+	}
+	if (err[0] != '\0') {
+		node* node_err = get_node_by_relative_path(nParams->start_node, err);
+		if (node_err == NULL) {
+			printf("File not found!\n");
+			return NULL;
+		}
+		else {
+			// open file
+			if (node_try_lock(node_err)) {
+				pipe* p = pipe_create();
+				file_writter_run(p, node_err);
+				nParams->out = p;
+			}
+			else {
+				printf("Can not open the file.\n");
+			}
+		}
+	}
+
+
+	return nParams;
+}
+
+int parse_redirects(char* cmd, int* pos, char* arg, char* in, char* out, char* err, int* app) {
+	int ret;
+	if (strcmp(arg, STR_REDIRECT_IN) == 0) {
+		ret = fill_string(cmd, pos, arg);
+		if (ret != 0) return 1;
+		strcpy_s(in, MAX_PATH_LEN, arg);
+		return 0;
+	}
+	else if (strcmp(arg, STR_REDIRECT_OUT) == 0) {
+		ret = fill_string(cmd, pos, arg);
+		if (ret != 0) return 1;
+		(*app) = 0;
+		strcpy_s(out, MAX_PATH_LEN, arg);
+		return 0;
+	}
+	else if (strcmp(arg, STR_REDIRECT_OUT_APP) == 0) {
+		ret = fill_string(cmd, pos, arg);
+		if (ret != 0) return 1;
+		(*app) = 1;
+		strcpy_s(out, MAX_PATH_LEN, arg);
+		return 0;
+	}
+	else if (strcmp(arg, STR_REDIRECT_ERR) == 0) {
+		ret = fill_string(cmd, pos, arg);
+		if (ret != 0) return 1;
+		strcpy_s(err, MAX_PATH_LEN, arg);
+		return 0;
+	}
 
 	return 0;
 }
@@ -300,6 +373,39 @@ void dir(run_params* par) {
 		pipe_write_s(par->out, listDir[i]->name);
 		pipe_write_s(par->out, "\n");
 	}
+}
+
+void c_pipe(run_params* par) {
+	int c = 0;
+	while (1) {
+		c = pipe_read(par->in);
+		if (c == -1) break;
+		pipe_write(par->out, c);
+	}
+}
+
+void tree(run_params* par) {
+	node* n = par->start_node;
+	int spaces = 0;
+	tree_list(n, &spaces, par);
+}
+
+void tree_list(node* n, int* spaces, run_params* par) {
+	int i = 0;
+	for (i = 0; i < (*spaces); i++) pipe_write_s(par->out, " ");
+	if ((*spaces) != 0) pipe_write_s(par->out, "\\-");
+
+	pipe_write_s(par->out, n->name);
+	pipe_write_s(par->out, "\n");
+	(*spaces) += 2;
+
+	node** listDir = node_get_entries(n);
+	int max = node_get_entries_count(n);
+	for (i = 0; i < max; i++) {
+		tree_list(n->dirEntries[i], spaces, par);
+	}
+
+	(*spaces) -= 2;
 }
 
 void cd(run_params* par) {
