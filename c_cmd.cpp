@@ -320,7 +320,7 @@ run_params* make_params(run_params* parent_par, char* in, char* out, char* err, 
 			if (node_try_lock(node_err)) {
 				pipe* p = pipe_create();
 				file_writter_run(p, node_err);
-				nParams->out = p;
+				nParams->err = p;
 			}
 			else {
 				printf("Can not open the file.\n");
