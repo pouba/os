@@ -12,6 +12,7 @@
 #define STR_REDIRECT_ERR "2>"
 
 #define CMD_END_CHAR ';'
+#define CMD_PIPE_CHAR '|'
 #define CMD_END_CHAR_LINE 10
 #define CMD_END_CONCURRENT_CHAR '&'
 

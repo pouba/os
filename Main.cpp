@@ -66,7 +66,7 @@ int main()
 	par.start_node = root;
 	par.root_node = root;
 
-	c_run( (LPTHREAD_START_ROUTINE) c_cmd_run, &par);
+	c_run( (LPTHREAD_START_ROUTINE) c_cmd_run, &par, 0);
 
 	WaitForSingleObject(h_out, INFINITE);
 	WaitForSingleObject(h_err, INFINITE);

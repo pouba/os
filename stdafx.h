@@ -20,5 +20,6 @@
 #include "file_read_write_utils.h"
 #include "cmd.h"
 #include "constants.h"
+#include "commands.h"
 
 // TODO: reference additional headers your program requires here

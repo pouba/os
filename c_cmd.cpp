@@ -1,38 +1,33 @@
 #include "stdafx.h"
 
-void c_run(LPTHREAD_START_ROUTINE f, run_params* params) {
-	// INIT
+void c_run(LPTHREAD_START_ROUTINE f, run_params* params, int wait) {
+	params->func = f;
 
-	// THREAD
-	HANDLE thread = CreateThread(NULL, 0, f, params, 0, NULL);
+	HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)before_after, params, 0, NULL);
 
-	//WAIT
-	WaitForSingleObject(thread, INFINITE);
-
-	//CLEANUP
-	pipe_write(params->out, -1);
-	pipe_write(params->err, -1);
+	if (wait) WaitForSingleObject(thread, INFINITE);
 }
 
-int parse_cmd(char* cmd, run_params* par);
-int parse_line(char* line, run_params* par);
+void* before_after(void* par) {
+	run_params* params = (run_params*)(par);
+	void (*function) (void*);
 
-int parse_redirects(char* cmd, int* pos, char* arg, char* in, char* out, char* err, int* app);
-int isTextPresent(char* src, int pos, char* target);
+	function = (void (*) (void*))params->func;
 
-run_params* make_params(run_params* parent_par, char* in, char* out, char* err, int app, char** args, int argc, char* cmd_name);
+	// before
 
-void dir(run_params* par);
-void echo(run_params* par);
-void scan(run_params* par);
-void random(run_params* par);
-void cd(run_params* par);
-void tree(run_params* par);
-void tree_list(node* n, int* spaces, run_params* par);
-void c_pipe(run_params* par);
+	// function
+	function((void*)params);
+
+	//after
+	pipe_write(params->out, -1);
+	pipe_write(params->err, -1);
+
+	return NULL;
+}
 
 void c_cmd_run(run_params* params) {
-	
+
 	int c;
 	int i = 0;
 	char* line = (char*)malloc(sizeof(char) * MAX_LINE_LEN);
@@ -78,7 +73,7 @@ int parse_line(char* line, run_params* par) {
 		if ((c == CMD_END_CHAR) || (c == '\0')) {
 			cmd[pos_cmd] = '\0';
 			pos_line++;
-			int ret = parse_cmd(cmd, par);
+			int ret = parse_part(cmd, par);
 			if (ret == 1) return 1;
 			pos_cmd = 0;
 			if (c == '\0') return 0;
@@ -90,6 +85,133 @@ int parse_line(char* line, run_params* par) {
 		}
 
 	}
+}
+
+int parse_part(char* part, run_params* par) {
+	char* cmd = (char*)malloc(sizeof(char) * MAX_CMD_LEN);
+	int pos_part = 0, pos_cmd = 0;
+	int c;
+
+	pipe* pipe;
+	run_params* act_par = par;
+
+	while (true) {
+		c = part[pos_part];
+
+		if (c == CMD_PIPE_CHAR) {
+			cmd[pos_cmd] = '\0';
+			pos_part++;
+			printf("*pipe\n");
+
+			run_params* act_par_new = (run_params*)malloc(sizeof(run_params));
+			memcpy_s(act_par_new, sizeof(run_params), act_par, sizeof(run_params));
+			pipe = pipe_create();
+
+			act_par_new->out = pipe;
+			act_par->in = pipe;
+
+			int ret = parse_cmd(cmd, act_par_new, 0);
+			if (ret == 1) return 1;
+			pos_cmd = 0;
+		}
+		else if (c == '\0') {
+			cmd[pos_cmd] = '\0';
+			pos_part++;
+
+			run_params* act_par_new = (run_params*)malloc(sizeof(run_params));
+			memcpy_s(act_par_new, sizeof(run_params), act_par, sizeof(run_params));
+			act_par_new->out = par->out;
+
+			int ret = parse_cmd(cmd, par, 1);
+			if (ret == 1) return 1;
+			return 0;
+		}
+		else {
+			cmd[pos_cmd] = part[pos_part];
+			pos_cmd++;
+			pos_part++;
+		}
+
+	}
+
+	printf("%s\n", cmd);
+	return 0;
+}
+
+int parse_cmd(char* cmd, run_params* par, int wait) {
+	int pos, i;
+
+	char* cmd_itself = (char*)malloc(sizeof(char) * MAX_CMD_LEN);
+	char* input = (char*)malloc(sizeof(char) * MAX_PATH_LEN);
+	char* output = (char*)malloc(sizeof(char) * MAX_PATH_LEN);
+	char* err_output = (char*)malloc(sizeof(char) * MAX_PATH_LEN);
+	int out_append = 0;
+	for (i = 0; i < MAX_PATH_LEN; i++) {
+		input[i] = '\0';
+		output[i] = '\0';
+		err_output[i] = '\0';
+	}
+
+	char** args = (char**)malloc(sizeof(char*) * MAX_ARGC);
+	char* arg = (char*)malloc(sizeof(char) * MAX_PARAM_LEN);
+	int argc = 0;
+
+	pos = 0;
+	int ret;
+	ret = fill_string(cmd, &pos, cmd_itself);
+	if (ret != 0) return 0; // empty command
+
+	while (1) {
+		ret = fill_string(cmd, &pos, arg);
+		if (ret != 0) break;
+
+		if (parse_redirects(cmd, &pos, arg, input, output, err_output, &out_append) != 0) {
+			break;
+		}
+		else {
+			if (argc >= MAX_ARGC) {
+				return 2;
+			}
+
+			args[argc] = arg;
+			argc++;
+			arg = (char*)malloc(sizeof(char) * MAX_PARAM_LEN);
+		}
+	}
+
+	run_params* nParams = make_params(par, input, output, err_output, out_append, args, argc, cmd_itself);
+	if (nParams == NULL) return 3;
+
+	if (strcmp(cmd_itself, "exit") == 0) {
+		pipe_set_auto_close(par->out, 1);
+		pipe_set_auto_close(par->err, 1);
+		pipe_write(par->out, -1);
+		pipe_write(par->err, -1);
+		return 1;
+	}
+	else if (strcmp(cmd_itself, "dir") == 0) {
+		c_run((LPTHREAD_START_ROUTINE)(dir), nParams, wait);
+	}
+	else if (strcmp(cmd_itself, "echo") == 0) {
+		c_run((LPTHREAD_START_ROUTINE)(echo), nParams, wait);
+	}
+	else if (strcmp(cmd_itself, "scan") == 0) {
+		c_run((LPTHREAD_START_ROUTINE)(scan), nParams, wait);
+	}
+	else if (strcmp(cmd_itself, "rand") == 0) {
+		c_run((LPTHREAD_START_ROUTINE)(random), nParams, wait);
+	}
+	else if (strcmp(cmd_itself, "cd") == 0) {
+		c_run((LPTHREAD_START_ROUTINE)(cd), nParams, wait);
+	}
+	else if (strcmp(cmd_itself, "tree") == 0) {
+		c_run((LPTHREAD_START_ROUTINE)(tree), nParams, wait);
+	}
+	else if (strcmp(cmd_itself, "pipe") == 0) {
+		c_run((LPTHREAD_START_ROUTINE)(c_pipe), nParams, wait);
+	}
+
+	return 0;
 }
 
 int fill_string(char* source, int* from, char* dest) {
@@ -180,82 +302,6 @@ int isTextPresent(char* src, int pos, char* target) {
 	}
 
 return 1;
-}
-
-int parse_cmd(char* cmd, run_params* par) {
-	int pos, i;
-
-	char* cmd_itself = (char*)malloc(sizeof(char) * MAX_CMD_LEN);
-	char* input = (char*)malloc(sizeof(char) * MAX_PATH_LEN);
-	char* output = (char*)malloc(sizeof(char) * MAX_PATH_LEN);
-	char* err_output = (char*)malloc(sizeof(char) * MAX_PATH_LEN);
-	int out_append = 0;
-	for (i = 0; i < MAX_PATH_LEN; i++) {
-		input[i] = '\0';
-		output[i] = '\0';
-		err_output[i] = '\0';
-	}
-
-	char** args = (char**)malloc(sizeof(char*) * MAX_ARGC);
-	char* arg = (char*)malloc(sizeof(char) * MAX_PARAM_LEN);
-	int argc = 0;
-
-	pos = 0;
-	int ret;
-	ret = fill_string(cmd, &pos, cmd_itself);
-	if (ret != 0) return 0; // empty command
-
-	while (1) {
-		ret = fill_string(cmd, &pos, arg);
-		if (ret != 0) break;
-
-		if (parse_redirects(cmd, &pos, arg, input, output, err_output, &out_append) != 0) {
-			break;
-		}
-		else {
-			if (argc >= MAX_ARGC) {
-				return 2;
-			}
-
-			args[argc] = arg;
-			argc++;
-			arg = (char*)malloc(sizeof(char) * MAX_PARAM_LEN);
-		}
-	}
-
-	run_params* nParams = make_params(par, input, output, err_output, out_append, args, argc, cmd_itself);
-	if (nParams == NULL) return 3;
-
-	if (strcmp(cmd_itself, "exit") == 0) {
-		pipe_set_auto_close(par->out, 1);
-		pipe_set_auto_close(par->err, 1);
-		pipe_write(par->out, -1);
-		pipe_write(par->err, -1);
-		return 1;
-	}
-	else if (strcmp(cmd_itself, "dir") == 0) {
-		c_run((LPTHREAD_START_ROUTINE)(dir), nParams);
-	}
-	else if (strcmp(cmd_itself, "echo") == 0) {
-		c_run((LPTHREAD_START_ROUTINE)(echo), nParams);
-	}
-	else if (strcmp(cmd_itself, "scan") == 0) {
-		c_run((LPTHREAD_START_ROUTINE)(scan), nParams);
-	}
-	else if (strcmp(cmd_itself, "rand") == 0) {
-		c_run((LPTHREAD_START_ROUTINE)(random), nParams);
-	}
-	else if (strcmp(cmd_itself, "cd") == 0) {
-		c_run((LPTHREAD_START_ROUTINE)(cd), nParams);
-	}
-	else if (strcmp(cmd_itself, "tree") == 0) {
-		c_run((LPTHREAD_START_ROUTINE)(tree), nParams);
-	}
-	else if (strcmp(cmd_itself, "pipe") == 0) {
-		c_run((LPTHREAD_START_ROUTINE)(c_pipe), nParams);
-	}
-
-	return 0;
 }
 
 run_params* make_params(run_params* parent_par, char* in, char* out, char* err, int app, char** args, int argc, char* cmd_name) {
@@ -362,89 +408,4 @@ int parse_redirects(char* cmd, int* pos, char* arg, char* in, char* out, char* e
 	}
 
 	return 0;
-}
-
-void dir(run_params* par) {
-	node* n = par->start_node;
-	node** listDir = node_get_entries(n);
-	int i = 0;
-	int max = node_get_entries_count(n);
-	for (i = 0; i < max; i++) {
-		pipe_write_s(par->out, listDir[i]->name);
-		pipe_write_s(par->out, "\n");
-	}
-}
-
-void c_pipe(run_params* par) {
-	int c = 0;
-	while (1) {
-		c = pipe_read(par->in);
-		if (c == -1) break;
-		pipe_write(par->out, c);
-	}
-}
-
-void tree(run_params* par) {
-	node* n = par->start_node;
-	int spaces = 0;
-	tree_list(n, &spaces, par);
-}
-
-void tree_list(node* n, int* spaces, run_params* par) {
-	int i = 0;
-	for (i = 0; i < (*spaces); i++) pipe_write_s(par->out, " ");
-	if ((*spaces) != 0) pipe_write_s(par->out, "\\-");
-
-	pipe_write_s(par->out, n->name);
-	pipe_write_s(par->out, "\n");
-	(*spaces) += 2;
-
-	node** listDir = node_get_entries(n);
-	int max = node_get_entries_count(n);
-	for (i = 0; i < max; i++) {
-		tree_list(n->dirEntries[i], spaces, par);
-	}
-
-	(*spaces) -= 2;
-}
-
-void cd(run_params* par) {
-	char* filename = par->args[0];
-	node* n = get_node_by_name(par->start_node, filename);
-
-	if (n != NULL) {
-		pipe_write_s(par->out, "found");
-	}
-}
-
-void echo(run_params* par) {
-	pipe_write_s(par->out, "out\n");
-	pipe_write_s(par->err, "err\n");
-}
-
-void random(run_params* par) {
-	while (true) {
-		int c = pipe_read_non_blocking(par->in);
-		if (c == 65) break;
-
-		pipe_write_s(par->out, "AAA\n");
-	}
-}
-
-void scan(run_params* par) {
-	while (true) {
-		int c = pipe_read(par->in);
-		if (c == 65) break;
-
-		char str[10];
-		int i;
-		for (i = 0; i < 10; i++) {
-			str[i] = '\0';
-		}
-		sprintf_s(str, "%d\n", c);
-
-		pipe_write_s(par->out, str);
-	}
-
-
 }
