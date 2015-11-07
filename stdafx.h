@@ -13,6 +13,7 @@
 #include <tchar.h>
 #include <windows.h>
 #include <conio.h>
+#include <time.h>
 
 #include "node.h"
 #include "pipe.h"

@@ -20,6 +20,7 @@ void c_run(LPTHREAD_START_ROUTINE f, run_params* params, int wait);
 void c_cmd_run(run_params* params);
 
 void get_path(node* node, char* path, int* position);
+void write_path(run_params* params);
 
 int parse_cmd(char* cmd, run_params* par, int wait);
 int parse_part(char* line, run_params* par);

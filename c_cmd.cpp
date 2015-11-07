@@ -31,13 +31,12 @@ void c_cmd_run(run_params* params) {
 	int c;
 	int i = 0;
 	char* line = (char*)malloc(sizeof(char) * MAX_LINE_LEN);
-	char* path = (char*)malloc(sizeof(char) * MAX_PATH_LEN);
 
 	pipe* in = params->in;
 	pipe* out = params->out;
 	pipe* err = params->err;
 
-	node *act = params->start_node;
+	write_path(params);
 
 	int pos = 0;
 	while (true) {
@@ -54,6 +53,8 @@ void c_cmd_run(run_params* params) {
 			if (ret == 1) break;
 			pos = 0;
 			if (c == -1) break;
+
+			write_path(params);
 		}
 		else {
 			line[pos] = c;
@@ -61,6 +62,20 @@ void c_cmd_run(run_params* params) {
 		}
 	}
 
+}
+
+void write_path(run_params* params) {
+	int i;
+	for (i = 0; i < params->argc; i++) {
+		if (strcmp(params->args[i], "-s") == 0) return;
+	}
+
+	int path_pos = 0;
+	char* path = (char*)malloc(sizeof(char) * MAX_PATH_LEN);
+	get_path(params->start_node, path, &path_pos);
+	pipe_write_s(params->out, path);
+	pipe_write_s(params->out, " # ");
+	free(path);
 }
 
 int parse_line(char* line, run_params* par) {
@@ -165,7 +180,11 @@ int parse_cmd(char* cmd, run_params* par, int wait) {
 		ret = fill_string(cmd, &pos, arg);
 		if (ret != 0) break;
 
-		if (parse_redirects(cmd, &pos, arg, input, output, err_output, &out_append) != 0) {
+		ret = parse_redirects(cmd, &pos, arg, input, output, err_output, &out_append);
+		if (ret == 0) {
+			continue;
+		}
+		else if (ret == 1) {
 			break;
 		}
 		else {
@@ -202,13 +221,19 @@ int parse_cmd(char* cmd, run_params* par, int wait) {
 		c_run((LPTHREAD_START_ROUTINE)(random), nParams, wait);
 	}
 	else if (strcmp(cmd_itself, "cd") == 0) {
-		c_run((LPTHREAD_START_ROUTINE)(cd), nParams, wait);
+		cd(nParams, par);
 	}
 	else if (strcmp(cmd_itself, "tree") == 0) {
 		c_run((LPTHREAD_START_ROUTINE)(tree), nParams, wait);
 	}
 	else if (strcmp(cmd_itself, "pipe") == 0) {
 		c_run((LPTHREAD_START_ROUTINE)(c_pipe), nParams, wait);
+	}
+	else if (strcmp(cmd_itself, "type") == 0) {
+		c_run((LPTHREAD_START_ROUTINE)(type), nParams, wait);
+	}
+	else if (strcmp(cmd_itself, "info") == 0) {
+		c_run((LPTHREAD_START_ROUTINE)(info), nParams, wait);
 	}
 
 	return 0;
@@ -347,7 +372,7 @@ run_params* make_params(run_params* parent_par, char* in, char* out, char* err, 
 			// open file
 			if (node_try_lock(node_out)) {
 				pipe* p = pipe_create();
-				file_writter_run(p, node_out);
+				file_writter_run(p, node_out, app);
 				nParams->out = p;
 			}
 			else {
@@ -365,7 +390,7 @@ run_params* make_params(run_params* parent_par, char* in, char* out, char* err, 
 			// open file
 			if (node_try_lock(node_err)) {
 				pipe* p = pipe_create();
-				file_writter_run(p, node_err);
+				file_writter_run(p, node_err, 0);
 				nParams->err = p;
 			}
 			else {
@@ -407,5 +432,5 @@ int parse_redirects(char* cmd, int* pos, char* arg, char* in, char* out, char* e
 		return 0;
 	}
 
-	return 0;
+	return 2;
 }

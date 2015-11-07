@@ -5,6 +5,8 @@
 
 int main()
 {
+	srand(time(NULL));
+
 	node* root = node_create("C:", NULL);
 	node* n1 = node_create("n1", root);
 	node* n2 = node_create("n2", root);
@@ -65,12 +67,17 @@ int main()
 	par.err = err;
 	par.start_node = root;
 	par.root_node = root;
+	par.args = (char**)malloc(sizeof(char*) * 1);
+	par.args[0] = "-main";
+	par.argc = 1;
 
 	c_run( (LPTHREAD_START_ROUTINE) c_cmd_run, &par, 0);
 
 	WaitForSingleObject(h_out, INFINITE);
 	WaitForSingleObject(h_err, INFINITE);
 	TerminateThread(h_in, 0); // needs to be terminated, otherwise would wait for input forever
+
+	free(par.args);
 
     return 0;
 }

@@ -44,31 +44,25 @@ void tree_list(node* n, int* spaces, run_params* par) {
 	(*spaces) -= 2;
 }
 
-void cd(run_params* par) {
-	printf("%d\n", par->argc);
-	char* filename = par->args[0];
-	node* n = get_node_by_name(par->start_node, filename);
+void echo(run_params* par) {
+	int i;
 
-	if (n != NULL) {
-		pipe_write_s(par->out, "found");
+	for (i = 0; i < par->argc; i++) {
+		pipe_write_s(par->out, par->args[i]);
 	}
 }
 
-void echo(run_params* par) {
-	pipe_write_s(par->out, "out\n");
-	pipe_write_s(par->err, "err\n");
-}
-
 void random(run_params* par) {
+	char buffer[50];
+
 	while (true) {
 		int c = pipe_read_non_blocking(par->in);
 		if (c == 65) {
-			pipe_write(par->out, -1);
-			printf("Ending\n");
 			break;
 		}
 
-		pipe_write_s(par->out, "AAA\n");
+		sprintf_s(buffer, "%d.%d\n", rand(), rand());
+		pipe_write_s(par->out, buffer);
 	}
 }
 
@@ -88,4 +82,47 @@ void scan(run_params* par) {
 	}
 
 
+}
+
+void type(run_params* par) {
+	int i;
+
+	if (par->argc < 1) {
+		pipe_write_s(par->err, "Too few arguments for 'type'.\n");
+		return;
+	}
+
+	char* filename = par->args[0];
+	node* n = get_node_by_name(par->start_node, filename);
+
+	if (n == NULL) {
+		pipe_write_s(par->err, "File does not exist.\n");
+		return;
+	}
+
+	if (!node_try_lock(n)) {
+		pipe_write_s(par->err, "Can't open the file.\n");
+		return;
+	}
+
+	for (i = 0; i < n->content_len; i++) {
+		pipe_write(par->out, n->content[i]);
+	}
+
+	node_unlock(n);
+}
+
+void info(run_params* par) {
+	int i;
+	char buffer[300];
+
+	sprintf_s(buffer, "CMD name: %s\n", par->cmd_name);
+	pipe_write_s(par->out, buffer);
+	sprintf_s(buffer, "Argc: %d\n", par->argc);
+	pipe_write_s(par->out, buffer);
+
+	for (i = 0; i < par->argc; i++) {
+		sprintf_s(buffer, "Arg %d.: %s\n", i, par->args[i]);
+		pipe_write_s(par->out, buffer);
+	}
 }

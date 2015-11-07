@@ -73,16 +73,18 @@ HANDLE file_reader_run(pipe* pipe, node* n) {
 	file_rw_data* data = (file_rw_data*)malloc(sizeof(file_rw_data));
 	data->n = n;
 	data->p = pipe;
+	data->append = 0;
 
 	HANDLE thread = CreateThread(NULL, 0, file_reader_func, (void*)(data), 0, NULL);
 	if (thread == NULL) printf("Error when creating thread");
 	return thread;
 }
 
-HANDLE file_writter_run(pipe* pipe, node* n) {
+HANDLE file_writter_run(pipe* pipe, node* n, int append) {
 	file_rw_data* data = (file_rw_data*)malloc(sizeof(file_rw_data));
 	data->n = n;
 	data->p = pipe;
+	data->append = append;
 
 	HANDLE thread = CreateThread(NULL, 0, file_writer_func, (void*)(data), 0, NULL);
 	if (thread == NULL) printf("Error when creating thread");
@@ -119,14 +121,29 @@ DWORD WINAPI file_writer_func(void* data) {
 	file_rw_data* d = (file_rw_data*)(data);
 	node* node = d->n;
 	pipe* pipe = d->p;
-	int size, c, pos, max;
+	int c, pos, max;
 	char* cont;
 
-	if (node->content != NULL) free(node->content);
-	size = 0;
-	max = 100;
-	pos = 0;
-	cont = (char*)malloc(sizeof(char) * max);
+	if (d->append) {
+		if (node->content == NULL) {
+			node->content = (char*)malloc(sizeof(char) * 100);
+			cont = node->content;
+			max = 100;
+			pos = 0;
+			node->content_len = 0;
+		}
+		else {
+			cont = node->content;
+			pos = node->content_len;
+			max = pos;
+		}
+	}
+	else {
+		if (node->content != NULL) free(node->content);
+		max = 100;
+		pos = 0;
+		cont = (char*)malloc(sizeof(char) * max);
+	}
 
 	while (true) {
 		c = pipe_read(pipe);
