@@ -7,43 +7,43 @@ int main()
 {
 	srand(time(NULL));
 
-	node* root = node_create("C:", NULL);
-	node* n1 = node_create("n1", root);
-	node* n2 = node_create("n2", root);
-	node* n3 = node_create("n3", root);
-	node* n4 = node_create("n4", root);
-	node* n5 = node_create("n5", root);
-	node* n5a = node_create("n5a", n5);
-	node* n5b = node_create("n5b", n5);
+	node* root = node_create("C:", NULL, 1);
+	node* n1 = node_create("n1", root, 0);
+	node* n2 = node_create("n2", root, 0);
+	node* n3 = node_create("n3", root, 0);
+	node* n4 = node_create("n4", root, 1);
+	node* n5 = node_create("n5", root, 1);
+	node* n5a = node_create("n5a", n5, 0);
+	node* n5b = node_create("n5b", n5, 0);
 
-	char* str = "n1 - aaaaaa";
+	char* str = "n1 - aaaaaa\n";
 	n1->content = (char*)malloc(sizeof(char) * strlen(str)+1);
 	memcpy(n1->content, str, strlen(str)+1);
 	n1->content_len = strlen(n1->content);
 
-	str = "n2 - 4546456";
+	str = "n2 - 4546456\n";
 	n2->content = (char*)malloc(sizeof(char) * strlen(str)+1);
 	memcpy(n2->content, str, strlen(str)+1);
 	n2->content_len = strlen(n2->content);
 
-	str = "n3 - ,m,mkjhseursjagfjhsdhj";
+	str = "n3 - ,m,mkjhseursjagfjhsdhj\n";
 	n3->content = (char*)malloc(sizeof(char) * strlen(str)+1);
 	memcpy(n3->content, str, strlen(str)+1);
 	n3->content_len = strlen(n3->content);
 
-	str = "n4 - yighjgjhgfyufyt";
+	str = "n4 - yighjgjhgfyufyt\n";
 	n4->content = (char*)malloc(sizeof(char) * strlen(str)+1);
 	memcpy(n4->content, str, strlen(str) + 1);
 	n4->content_len = strlen(n4->content);
 
 
 
-	str = "n5a - 45455";
+	str = "n5a - 45455\n";
 	n5a->content = (char*)malloc(sizeof(char) * strlen(str)+1);
 	memcpy(n5a->content, str, strlen(str) + 1);
 	n5a->content_len = strlen(n5a->content);
 
-	str = "n5b - 1010";
+	str = "n5b - 1010\n";
 	n5b->content = (char*)malloc(sizeof(char) * strlen(str)+1);
 	memcpy(n5b->content, str, strlen(str) + 1);
 	n5b->content_len = strlen(n5b->content);

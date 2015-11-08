@@ -116,7 +116,6 @@ int parse_part(char* part, run_params* par) {
 		if (c == CMD_PIPE_CHAR) {
 			cmd[pos_cmd] = '\0';
 			pos_part++;
-			printf("*pipe\n");
 
 			run_params* act_par_new = (run_params*)malloc(sizeof(run_params));
 			memcpy_s(act_par_new, sizeof(run_params), act_par, sizeof(run_params));
@@ -149,7 +148,6 @@ int parse_part(char* part, run_params* par) {
 
 	}
 
-	printf("%s\n", cmd);
 	return 0;
 }
 
@@ -234,6 +232,15 @@ int parse_cmd(char* cmd, run_params* par, int wait) {
 	}
 	else if (strcmp(cmd_itself, "info") == 0) {
 		c_run((LPTHREAD_START_ROUTINE)(info), nParams, wait);
+	}
+	else if (strcmp(cmd_itself, "rm") == 0) {
+		c_run((LPTHREAD_START_ROUTINE)(rm), nParams, wait);
+	}
+	else if (strcmp(cmd_itself, "mkdir") == 0) {
+		c_run((LPTHREAD_START_ROUTINE)(mkdir), nParams, wait);
+	}
+	else if (strcmp(cmd_itself, "freq") == 0) {
+		c_run((LPTHREAD_START_ROUTINE)(freq), nParams, wait);
 	}
 
 	return 0;
@@ -346,57 +353,64 @@ run_params* make_params(run_params* parent_par, char* in, char* out, char* err, 
 	if (in[0] != '\0') {
 		node* node_in = get_node_by_relative_path(nParams->start_node, in);
 		if (node_in == NULL) {
-			printf("File not found!\n");
+			pipe_write_s(parent_par->err, "File not found!\n");
 			return NULL;
 		}
+		if (node_in->directory) {
+			pipe_write_s(parent_par->err, "Target is a directory!\n");
+			return NULL;
+		}
+		// open file
+		if (node_try_lock(node_in)) {
+			pipe* p = pipe_create();
+			file_reader_run(p, node_in);
+			nParams->in = p;
+		}
 		else {
-			// open file
-			if (node_try_lock(node_in)) {
-				pipe* p = pipe_create();
-				file_reader_run(p, node_in);
-				nParams->in = p;
-			}
-			else {
-				printf("Can not open the file.\n");
-				return NULL;
-			}
+			pipe_write_s(parent_par->err, "Can not open the file.\n");
+			return NULL;
 		}
 	}
 	if (out[0] != '\0') {
 		node* node_out = get_node_by_relative_path(nParams->start_node, out);
 		if (node_out == NULL) {
-			printf("File not found!\n");
+			pipe_write_s(parent_par->err, "File not found!\n");
 			return NULL;
 		}
+		if (node_out->directory) {
+			pipe_write_s(parent_par->err, "Target is a directory!\n");
+			return NULL;
+		}
+		// open file
+		if (node_try_lock(node_out)) {
+			pipe* p = pipe_create();
+			file_writter_run(p, node_out, app);
+			nParams->out = p;
+		}
 		else {
-			// open file
-			if (node_try_lock(node_out)) {
-				pipe* p = pipe_create();
-				file_writter_run(p, node_out, app);
-				nParams->out = p;
-			}
-			else {
-				printf("Can not open the file.\n");
-			}
+			pipe_write_s(parent_par->err, "Can not open the file.\n");
 		}
 	}
 	if (err[0] != '\0') {
 		node* node_err = get_node_by_relative_path(nParams->start_node, err);
 		if (node_err == NULL) {
-			printf("File not found!\n");
+			pipe_write_s(parent_par->err, "File not found!\n");
 			return NULL;
 		}
-		else {
-			// open file
-			if (node_try_lock(node_err)) {
-				pipe* p = pipe_create();
-				file_writter_run(p, node_err, 0);
-				nParams->err = p;
-			}
-			else {
-				printf("Can not open the file.\n");
-			}
+		if (node_err->directory) {
+			pipe_write_s(parent_par->err, "Target is a directory!\n");
+			return NULL;
 		}
+		// open file
+		if (node_try_lock(node_err)) {
+			pipe* p = pipe_create();
+			file_writter_run(p, node_err, 0);
+			nParams->err = p;
+		}
+		else {
+			pipe_write_s(parent_par->err, "Can not open the file.\n");
+		}
+		
 	}
 
 

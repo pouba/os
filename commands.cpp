@@ -80,8 +80,6 @@ void scan(run_params* par) {
 
 		pipe_write_s(par->out, str);
 	}
-
-
 }
 
 void type(run_params* par) {
@@ -97,6 +95,10 @@ void type(run_params* par) {
 
 	if (n == NULL) {
 		pipe_write_s(par->err, "File does not exist.\n");
+		return;
+	}
+	if (n->directory) {
+		pipe_write_s(par->err, "File is a directory.\n");
 		return;
 	}
 
@@ -124,5 +126,78 @@ void info(run_params* par) {
 	for (i = 0; i < par->argc; i++) {
 		sprintf_s(buffer, "Arg %d.: %s\n", i, par->args[i]);
 		pipe_write_s(par->out, buffer);
+	}
+}
+
+void mkdir(run_params* par) {
+	if (par->argc < 1) {
+		pipe_write_s(par->err, "Too few parameters.\n");
+		return;
+	}
+	char* dir_name = par->args[0];
+	node* n = par->start_node;
+	node** listDir = node_get_entries(n);
+	int i = 0;
+	int max = node_get_entries_count(n);
+	for (i = 0; i < max; i++) {
+		if (strcmp(dir_name, n->dirEntries[i]->name) == 0) {
+			pipe_write_s(par->err, "File alrady exists.\n");
+			return;
+		}
+	}
+
+	node* dir = node_create(dir_name, n, 1);
+}
+
+void rm(run_params* par) {
+	if (par->argc < 1) {
+		pipe_write_s(par->err, "Too few parameters.\n");
+		return;
+	}
+	char* rm_name = par->args[0];
+	node* n = par->start_node;
+	node* rm_node = NULL;
+	node** listDir = node_get_entries(n);
+	int i = 0;
+	int max = node_get_entries_count(n);
+	for (i = 0; i < max; i++) {
+		if (strcmp(rm_name, n->dirEntries[i]->name) == 0) {
+			rm_node = n->dirEntries[i];
+			break;
+		}
+	}
+
+	if (rm_node == 0) {
+		pipe_write_s(par->err, "File does not exist.\n");
+		return;
+	}
+	if (rm_node->directory) {
+		pipe_write_s(par->err, "File is a directory.\n");
+		return;
+	}
+
+	node_remove_from_dir(n, rm_node);
+}
+
+void freq(run_params* par) {
+	int arr[500], i;
+	char buf[50];
+
+	for (i = 0; i < 500; i++) arr[i] = 0;
+
+	while (true) {
+		int c = pipe_read(par->in);
+		if (c == -1) break;
+
+		if ((c < 0) || (c >= 500)) continue;
+
+		arr[c]++;
+	}
+
+	for (i = 0; i < 500; i++) {
+		if (arr[i] > 0) {
+			sprintf_s(buf, "%d - %d\n", i, arr[i]);
+			pipe_write_s(par->out, buf);
+		}
 	}
 }

@@ -2,7 +2,7 @@
 
 #include "stdafx.h"
 
-node* node_create(char* name, node* parent) {
+node* node_create(char* name, node* parent, int dir) {
 	node* ret = (node*)malloc(sizeof node);
 
 	ret->name = name;
@@ -10,6 +10,7 @@ node* node_create(char* name, node* parent) {
 
 	ret->content = NULL;
 	ret->content_len = 0;
+	ret->directory = dir;
 
 	InitializeCriticalSection(&(ret->file_lock));
 	ret->locked = 0;
@@ -67,15 +68,39 @@ int node_add_to_dir(node* dir, node* child) {
 	child->parent = dir;
 
 	if (dir->dirEntries == NULL) {
-		dir->dirEntries = (node**) malloc(sizeof (node*) * 1);
+		dir->dirEntries = (node**)malloc(sizeof(node*) * 1);
 		dir->dirEntries[0] = child;
 		dir->entries_count = 1;
 	}
 	else {
 		dir->entries_count++;
-		node** newEntries = (node**)malloc(dir->entries_count * sizeof (node*));
+		node** newEntries = (node**)malloc(dir->entries_count * sizeof(node*));
 		newEntries[dir->entries_count - 1] = child;
-		memcpy((void*)newEntries, (void*)dir->dirEntries, sizeof (node*) * (dir->entries_count-1) );
+		memcpy((void*)newEntries, (void*)dir->dirEntries, sizeof(node*) * (dir->entries_count - 1));
+		free(dir->dirEntries);
+		dir->dirEntries = newEntries;
+	}
+
+	return 0;
+}
+
+int node_remove_from_dir(node* dir, node* child) {
+	int i, pos;
+	dir->entries_count--;
+
+	if (dir->entries_count == 0) {
+		free(dir->dirEntries);
+		dir->dirEntries = NULL;
+	}
+	else {
+		node** newEntries = (node**)malloc(dir->entries_count * sizeof(node*));
+		pos = 0;
+		for (i = 0; i < dir->entries_count + 1; i++) {
+			if (dir->dirEntries[i] != child) {
+				newEntries[pos] = dir->dirEntries[i];
+				pos++;
+			}
+		}
 		free(dir->dirEntries);
 		dir->dirEntries = newEntries;
 	}
