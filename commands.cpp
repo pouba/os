@@ -56,7 +56,7 @@ void random(run_params* par) {
 	char buffer[50];
 
 	while (true) {
-		int c = pipe_read_non_blocking(par->in);
+		int c = pipe_try_read(par->in);
 		if (c == 65) {
 			break;
 		}

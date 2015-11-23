@@ -3,9 +3,13 @@
 void c_run(LPTHREAD_START_ROUTINE f, run_params* params, int wait) {
 	params->func = f;
 
+	//printf("CMD RUN: in %d, out %d, err %d\n", params->in, params->out, params->err);
+
 	HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)before_after, params, 0, NULL);
 
 	if (wait) WaitForSingleObject(thread, INFINITE);
+
+	//printf("after wait CMD RUN: in %d, out %d, err %d\n", params->in, params->out, params->err);
 }
 
 void* before_after(void* par) {
@@ -15,13 +19,19 @@ void* before_after(void* par) {
 	function = (void (*) (void*))params->func;
 
 	// before
+	//printf("before: in %d, out %d, err %d\n", params->in, params->out, params->err);
 
 	// function
 	function((void*)params);
 
 	//after
-	pipe_write(params->out, -1);
-	pipe_write(params->err, -1);
+	//printf("after: in %d, out %d, err %d\n", params->in, params->out, params->err);
+
+	pipe_close_in(params->out);
+	pipe_close_in(params->err);
+	pipe_close_out(params->in);
+	
+	//printf("after close: in %d, out %d, err %d\n", params->in, params->out, params->err);
 
 	return NULL;
 }
@@ -32,9 +42,9 @@ void c_cmd_run(run_params* params) {
 	int i = 0;
 	char* line = (char*)malloc(sizeof(char) * MAX_LINE_LEN);
 
-	pipe* in = params->in;
-	pipe* out = params->out;
-	pipe* err = params->err;
+	pipe_out* in = params->in;
+	pipe_in* out = params->out;
+	pipe_in* err = params->err;
 
 	write_path(params);
 
@@ -119,10 +129,13 @@ int parse_part(char* part, run_params* par) {
 
 			run_params* act_par_new = (run_params*)malloc(sizeof(run_params));
 			memcpy_s(act_par_new, sizeof(run_params), act_par, sizeof(run_params));
-			pipe = pipe_create();
 
-			act_par_new->out = pipe;
-			act_par->in = pipe;
+			pipe_in* in_new = (pipe_in*)(malloc(sizeof pipe_in));
+			pipe_out* out_new = (pipe_out*)(malloc(sizeof pipe_out));
+			pipe_create(in_new, out_new, 1, 0);
+
+			act_par_new->out = in_new;
+			act_par->in = out_new;
 
 			int ret = parse_cmd(cmd, act_par_new, 0);
 			if (ret == 1) return 1;
@@ -200,11 +213,9 @@ int parse_cmd(char* cmd, run_params* par, int wait) {
 	if (nParams == NULL) return 3;
 
 	if (strcmp(cmd_itself, "exit") == 0) {
-		pipe_set_auto_close(par->out, 1);
-		pipe_set_auto_close(par->err, 1);
-		pipe_write(par->out, -1);
-		pipe_write(par->err, -1);
-		return 1;
+
+		/* TODO */
+
 	}
 	else if (strcmp(cmd_itself, "dir") == 0) {
 		c_run((LPTHREAD_START_ROUTINE)(dir), nParams, wait);
@@ -362,9 +373,11 @@ run_params* make_params(run_params* parent_par, char* in, char* out, char* err, 
 		}
 		// open file
 		if (node_try_lock(node_in)) {
-			pipe* p = pipe_create();
-			file_reader_run(p, node_in);
-			nParams->in = p;
+			pipe_in* p_in = (pipe_in *)malloc(sizeof(pipe_in));
+			pipe_out* p_out = (pipe_out *)malloc(sizeof(pipe_out));
+			pipe_create(p_in, p_out, 1, 1);
+			file_reader_run(p_in, node_in);
+			nParams->in = p_out;
 		}
 		else {
 			pipe_write_s(parent_par->err, "Can not open the file.\n");
@@ -383,9 +396,11 @@ run_params* make_params(run_params* parent_par, char* in, char* out, char* err, 
 		}
 		// open file
 		if (node_try_lock(node_out)) {
-			pipe* p = pipe_create();
-			file_writter_run(p, node_out, app);
-			nParams->out = p;
+			pipe_in* p_in = (pipe_in *)malloc(sizeof(pipe_in));
+			pipe_out* p_out = (pipe_out *)malloc(sizeof(pipe_out));
+			pipe_create(p_in, p_out, 1, 1);
+			file_writter_run(p_out, node_out, app);
+			nParams->out = p_in;
 		}
 		else {
 			pipe_write_s(parent_par->err, "Can not open the file.\n");
@@ -403,9 +418,11 @@ run_params* make_params(run_params* parent_par, char* in, char* out, char* err, 
 		}
 		// open file
 		if (node_try_lock(node_err)) {
-			pipe* p = pipe_create();
-			file_writter_run(p, node_err, 0);
-			nParams->err = p;
+			pipe_in* p_in = (pipe_in *)malloc(sizeof(pipe_in));
+			pipe_out* p_out = (pipe_out *)malloc(sizeof(pipe_out));
+			pipe_create(p_in, p_out, 1, 1);
+			file_writter_run(p_out, node_err, 0);
+			nParams->err = p_in;
 		}
 		else {
 			pipe_write_s(parent_par->err, "Can not open the file.\n");

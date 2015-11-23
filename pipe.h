@@ -10,21 +10,31 @@ typedef struct pipe_s {
 	int readpos;
 	int* buffer;
 
-	int auto_close;
-
 	CRITICAL_SECTION BufferLock;
 	CONDITION_VARIABLE BufferNotEmpty;
 	CONDITION_VARIABLE BufferNotFull;
 
 } pipe;
 
-pipe* pipe_create();
+typedef struct pipe_in_s {
+	pipe* pipe;
+	int autoclose;
+	int closed;
+} pipe_in;
 
-void pipe_set_auto_close(pipe* pipe, int value);
+typedef struct pipe_out_s {
+	pipe* pipe;
+	int autoclose;
+	int closed;
+} pipe_out;
 
-int pipe_read(pipe* pipe);
-int pipe_read_non_blocking(pipe* pipe);
+int pipe_create(pipe_in* in, pipe_out* out, int ac_in, int ac_out);
 
-void pipe_write(pipe* pipe, int wr);
-void pipe_write_s(pipe* pipe, char* s);
-void pipe_d_print(pipe* pipe);
+int pipe_read(pipe_out* pipe_out);
+int pipe_try_read(pipe_out* pipe_out);
+
+void pipe_write(pipe_in* pipe_in, int wr);
+void pipe_write_s(pipe_in* pipe_in, char* s);
+
+void pipe_close_in(pipe_in* pipe_in);
+void pipe_close_out(pipe_out* pipe_out);

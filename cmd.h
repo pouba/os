@@ -4,7 +4,9 @@
 
 typedef struct run_params_s {
 
-	pipe *in, *out, *err;
+	pipe_out* in;
+	pipe_in* out;
+	pipe_in* err;
 	node* start_node;
 	node* root_node;
 

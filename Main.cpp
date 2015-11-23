@@ -49,22 +49,28 @@ int main()
 	n5b->content_len = strlen(n5b->content);
 
 
-	pipe* in = pipe_create();
-	pipe* out = pipe_create();
-	pipe* err = pipe_create();
-	pipe_set_auto_close(in, 0);
-	pipe_set_auto_close(out, 0);
-	pipe_set_auto_close(err, 0);
+	pipe_in* in_in = (pipe_in *)malloc(sizeof(pipe_in));
+	pipe_out* in_out = (pipe_out *)malloc(sizeof(pipe_out));
+	pipe_create(in_in, in_out, 0, 0);
 
-	HANDLE h_in = std_reader_run(in);
-	HANDLE h_out = std_writter_run(out);
-	HANDLE h_err = std_writter_run(err);
+	pipe_in* out_in = (pipe_in *)malloc(sizeof(pipe_in));
+	pipe_out* out_out = (pipe_out *)malloc(sizeof(pipe_out));
+	pipe_create(out_in, out_out, 0, 0);
+
+	pipe_in* err_in = (pipe_in *)malloc(sizeof(pipe_in));
+	pipe_out* err_out = (pipe_out *)malloc(sizeof(pipe_out));
+	pipe_create(err_in, err_out, 0, 0);
+
+
+	HANDLE h_in = std_reader_run(in_in);
+	HANDLE h_out = std_writter_run(out_out);
+	HANDLE h_err = std_writter_run(err_out);
 
 	run_params par;
 	par.cmd_name = "cmd\0";
-	par.in = in;
-	par.out = out;
-	par.err = err;
+	par.in = in_out;
+	par.out = out_in;
+	par.err = err_in;
 	par.start_node = root;
 	par.root_node = root;
 	par.args = (char**)malloc(sizeof(char*) * 1);

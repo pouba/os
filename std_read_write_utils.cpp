@@ -2,21 +2,21 @@
 
 #define MAX_LINE_LEN 1000
 
-HANDLE std_reader_run(pipe* pipe) {
-	HANDLE thread = CreateThread(NULL, 0, std_reader_func, pipe, 0, NULL);
+HANDLE std_reader_run(pipe_in* pipe_in) {
+	HANDLE thread = CreateThread(NULL, 0, std_reader_func, pipe_in, 0, NULL);
 	if (thread == NULL) printf("Error when creating thread");
 	return thread;
 }
 
-HANDLE std_writter_run(pipe* pipe) {
-	HANDLE thread = CreateThread(NULL, 0, std_writer_func, pipe, 0, NULL);
+HANDLE std_writter_run(pipe_out* pipe_out) {
+	HANDLE thread = CreateThread(NULL, 0, std_writer_func, pipe_out, 0, NULL);
 	if (thread == NULL) printf("Error when creating thread");
 	return thread;
 }
 
 DWORD WINAPI std_reader_func(void* data) {
-	pipe* p;
-	p = (pipe*)(data);
+	pipe_in* p;
+	p = (pipe_in*)(data);
 
 	char* line = (char*)malloc(sizeof(char) * MAX_LINE_LEN);
 	int i = 0, pos = 0; 
@@ -26,7 +26,6 @@ DWORD WINAPI std_reader_func(void* data) {
 
 	int c;
 	while (true) {
-
 		c = getchar();
 		pipe_write(p, c);
 		if (c == -1) {
@@ -38,20 +37,14 @@ DWORD WINAPI std_reader_func(void* data) {
 }
 
 DWORD WINAPI std_writer_func(void* data) {
-	pipe* p;
-	p = (pipe*)(data);
+	pipe_out* p;
+	p = (pipe_out*)(data);
 
 	int c;
 	while (true) {
 		c  = pipe_read(p);
 		if (c == -1) {
-			if (p->auto_close) {
-				// TODO destroy pipe
-				break;
-			}
-			else {
-				//printf("no autoclose - ignoring -1\n");
-			}
+			break;
 		}
 		else {
 			putchar(c);
