@@ -26,7 +26,7 @@ void c_cmd_run(run_params* params);
 void get_path(node* node, char* path, int* position);
 void write_path(run_params* params);
 
-int parse_cmd(char* cmd, run_params* par, int wait);
+int parse_cmd(char* cmd, run_params* par, run_params* parent_par, int wait);
 int parse_part(char* line, run_params* par);
 int parse_line(char* line, run_params* par);
 

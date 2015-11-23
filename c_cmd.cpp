@@ -40,22 +40,30 @@ void* before_after(void* par) {
 
 void c_cmd_run(run_params* params) {
 
-	int c;
+	int c, ac_in, ac_out, ac_err;
 	int i = 0;
-	int out_path = 0;
+	int out_path = 1;
 	char* line = (char*)malloc(sizeof(char) * MAX_LINE_LEN);
 
 	pipe_out* in = params->in;
 	pipe_in* out = params->out;
 	pipe_in* err = params->err;
-
+	/*
 	for (i = 0; i < params->argc; i++) {
 		if (strcmp(params->args[i], "-main") == 0) {
 			out_path = 1;
 		}
 	}
-
+	*/
 	if (out_path) write_path(params);
+
+	ac_in = params->in->autoclose;
+	ac_out = params->out->autoclose;
+	ac_err = params->err->autoclose;
+
+	params->in->autoclose = 0;
+	params->out->autoclose = 0;
+	params->err->autoclose = 0;
 
 	int pos = 0;
 	while (true) {
@@ -81,6 +89,9 @@ void c_cmd_run(run_params* params) {
 		}
 	}
 
+	params->in->autoclose = ac_in;
+	params->out->autoclose = ac_out;
+	params->err->autoclose = ac_err;
 }
 
 void write_path(run_params* params) {
@@ -92,8 +103,13 @@ void write_path(run_params* params) {
 	int path_pos = 0;
 	char* path = (char*)malloc(sizeof(char) * MAX_PATH_LEN);
 	get_path(params->start_node, path, &path_pos);
+	/*
 	pipe_write_s(params->out, path);
 	pipe_write_s(params->out, " # ");
+	*/
+
+	printf("%s # ", path);
+
 	free(path);
 }
 
@@ -158,7 +174,7 @@ int parse_part(char* part, run_params* par) {
 			//printf("** ACT PAR: in %d (%d), out %d (%d) --- %s\n", act_par->in, act_par->in->pipe, act_par->out, act_par->out->pipe, act_par->cmd_name);
 			//printf("** ACT PAR NEW: in %d (%d), out %d (%d) --- %s\n", act_par_new->in, act_par_new->in->pipe, act_par_new->out, act_par_new->out->pipe, act_par_new->cmd_name);
 
-			int ret = parse_cmd(cmd, act_par_new, 0);
+			int ret = parse_cmd(cmd, act_par_new, par, 0);
 			if (ret == 1) return 1;
 			pos_cmd = 0;
 		}
@@ -170,7 +186,7 @@ int parse_part(char* part, run_params* par) {
 			memcpy_s(act_par_new, sizeof(run_params), act_par, sizeof(run_params));
 			//act_par_new->out = act_par->out;
 
-			int ret = parse_cmd(cmd, act_par_new, 1);
+			int ret = parse_cmd(cmd, act_par_new, par, 1);
 			if (ret == 1) return 1;
 			return 0;
 		}
@@ -185,9 +201,9 @@ int parse_part(char* part, run_params* par) {
 	return 0;
 }
 
-int parse_cmd(char* cmd, run_params* par, int wait) {
+int parse_cmd(char* cmd, run_params* par, run_params* parent_par, int wait) {
 
-	printf("** run: in %d (%d), out %d (%d) --- %s\n", par->in, par->in->pipe, par->out, par->out->pipe, par->cmd_name);
+	//printf("** run: in %d (%d), out %d (%d) --- %s\n", par->in, par->in->pipe, par->out, par->out->pipe, par->cmd_name);
 
 	int pos, i;
 
@@ -260,7 +276,7 @@ int parse_cmd(char* cmd, run_params* par, int wait) {
 		c_run((LPTHREAD_START_ROUTINE)(random), nParams, wait);
 	}
 	else if (strcmp(cmd_itself, "cd") == 0) {
-		cd(nParams, par);
+		cd(nParams, parent_par);
 	}
 	else if (strcmp(cmd_itself, "tree") == 0) {
 		c_run((LPTHREAD_START_ROUTINE)(tree), nParams, wait);
