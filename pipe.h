@@ -19,13 +19,11 @@ typedef struct pipe_s {
 typedef struct pipe_in_s {
 	pipe* pipe;
 	int autoclose;
-	int closed;
 } pipe_in;
 
 typedef struct pipe_out_s {
 	pipe* pipe;
 	int autoclose;
-	int closed;
 } pipe_out;
 
 int pipe_create(pipe_in* in, pipe_out* out, int ac_in, int ac_out);

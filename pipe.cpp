@@ -20,13 +20,12 @@ int pipe_create(pipe_in* pipe_in, pipe_out* pipe_out, int ac_in, int ac_out) {
 	pipe_in->autoclose = ac_in;
 	pipe_out->autoclose = ac_out;
 
-	pipe_in->closed = 0;
-	pipe_out->closed = 0;
-
 	return 0;
 }
 
 int pipe_try_read(pipe_out* pipe_out) {
+	//printf("pipe %d - try read\n", pipe_out);
+
 	pipe* pipe = pipe_out->pipe;
 	int ret;
 
@@ -45,6 +44,7 @@ int pipe_try_read(pipe_out* pipe_out) {
 }
 
 int pipe_read(pipe_out* pipe_out) {
+//	printf("pipe %d - read\n", pipe_out);
 	pipe* pipe = pipe_out->pipe;
 	int ret;
 
@@ -62,6 +62,7 @@ int pipe_read(pipe_out* pipe_out) {
 }
 
 void pipe_write(pipe_in* pipe_in, int wr) {
+//	printf("pipe %d - write\n", pipe_in);
 	pipe* pipe = pipe_in->pipe;
 
 	EnterCriticalSection(&(pipe->BufferLock));
@@ -85,19 +86,15 @@ void pipe_write_s(pipe_in* pipe_in, char* s) {
 }
 
 void pipe_close_in(pipe_in* pipe_in) {
-	if (pipe_in->closed) return;
-
+//	printf("pipe %d - close in\n", pipe_in);
 	if (pipe_in->autoclose) {
 		pipe_write(pipe_in, -1);
-		pipe_in->closed = 1;
 	}
 }
 
 void pipe_close_out(pipe_out* pipe_out) {
-	if (pipe_out->closed) return;
-
+//	printf("pipe %d - close out\n", pipe_out);
 	if (pipe_out->autoclose) {
 		while (pipe_read(pipe_out) != -1) {};
-		pipe_out->closed = 1;
 	}
 }

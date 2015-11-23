@@ -50,6 +50,7 @@ void echo(run_params* par) {
 	for (i = 0; i < par->argc; i++) {
 		pipe_write_s(par->out, par->args[i]);
 	}
+	pipe_write(par->out, '\n');
 }
 
 void random(run_params* par) {
@@ -200,4 +201,8 @@ void freq(run_params* par) {
 			pipe_write_s(par->out, buf);
 		}
 	}
+}
+
+void c_exit(run_params* par) {
+	// well, basically do nothing...
 }

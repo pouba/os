@@ -14,6 +14,8 @@ typedef struct run_params_s {
 	int argc;
 	char** args;
 
+	int secret_params;
+
 	LPTHREAD_START_ROUTINE func;
 
 } run_params;

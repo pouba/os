@@ -12,6 +12,7 @@ void info(run_params* par);
 void mkdir(run_params* par);
 void rm(run_params* par);
 void freq(run_params* par);
+void c_exit(run_params* par);
 
 
 void cd(run_params* par, run_params* parent_params);

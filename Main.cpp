@@ -76,6 +76,7 @@ int main()
 	par.args = (char**)malloc(sizeof(char*) * 1);
 	par.args[0] = "-main";
 	par.argc = 1;
+	par.secret_params = 1;
 
 	c_run( (LPTHREAD_START_ROUTINE) c_cmd_run, &par, 0);
 

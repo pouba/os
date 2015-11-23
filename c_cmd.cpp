@@ -3,35 +3,37 @@
 void c_run(LPTHREAD_START_ROUTINE f, run_params* params, int wait) {
 	params->func = f;
 
-	//printf("CMD RUN: in %d, out %d, err %d\n", params->in, params->out, params->err);
+//	printf("CMD RUN: in %d, out %d, err %d\n", params->in, params->out, params->err);
 
 	HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)before_after, params, 0, NULL);
 
 	if (wait) WaitForSingleObject(thread, INFINITE);
 
-	//printf("after wait CMD RUN: in %d, out %d, err %d\n", params->in, params->out, params->err);
+//	printf("after wait CMD RUN: in %d, out %d, err %d\n", params->in, params->out, params->err);
 }
 
 void* before_after(void* par) {
 	run_params* params = (run_params*)(par);
 	void (*function) (void*);
 
+//	printf("%d\n", params->secret_params);
+
 	function = (void (*) (void*))params->func;
 
 	// before
-	//printf("before: in %d, out %d, err %d\n", params->in, params->out, params->err);
+	//printf("before: in %d (%d), out %d (%d) -- %s\n", params->in, params->in->pipe, params->out, params->out->pipe, params->cmd_name);
 
 	// function
 	function((void*)params);
 
 	//after
-	//printf("after: in %d, out %d, err %d\n", params->in, params->out, params->err);
+	//printf("after: in %d (%d), out %d (%d) -- %s\n", params->in, params->in->pipe, params->out, params->out->pipe, params->cmd_name);
 
 	pipe_close_in(params->out);
 	pipe_close_in(params->err);
 	pipe_close_out(params->in);
-	
-	//printf("after close: in %d, out %d, err %d\n", params->in, params->out, params->err);
+
+	//printf("after close: in %d (%d), out %d (%d) -- %s\n", params->in, params->in->pipe, params->out, params->out->pipe, params->cmd_name);
 
 	return NULL;
 }
@@ -40,13 +42,20 @@ void c_cmd_run(run_params* params) {
 
 	int c;
 	int i = 0;
+	int out_path = 0;
 	char* line = (char*)malloc(sizeof(char) * MAX_LINE_LEN);
 
 	pipe_out* in = params->in;
 	pipe_in* out = params->out;
 	pipe_in* err = params->err;
 
-	write_path(params);
+	for (i = 0; i < params->argc; i++) {
+		if (strcmp(params->args[i], "-main") == 0) {
+			out_path = 1;
+		}
+	}
+
+	if (out_path) write_path(params);
 
 	int pos = 0;
 	while (true) {
@@ -64,7 +73,7 @@ void c_cmd_run(run_params* params) {
 			pos = 0;
 			if (c == -1) break;
 
-			write_path(params);
+			if (out_path) write_path(params);
 		}
 		else {
 			line[pos] = c;
@@ -92,10 +101,13 @@ int parse_line(char* line, run_params* par) {
 	char* cmd = (char*)malloc(sizeof(char) * MAX_CMD_LEN);
 	int pos_line = 0, pos_cmd = 0;
 	int c;
+	int in_q = 0;
 	while (true) {
 		c = line[pos_line];
 
-		if ((c == CMD_END_CHAR) || (c == '\0')) {
+		if (c == '"') in_q = 1 - in_q;
+
+		if (((c == CMD_END_CHAR) && (!in_q)) || (c == '\0')) {
 			cmd[pos_cmd] = '\0';
 			pos_line++;
 			int ret = parse_part(cmd, par);
@@ -117,13 +129,17 @@ int parse_part(char* part, run_params* par) {
 	int pos_part = 0, pos_cmd = 0;
 	int c;
 
-	pipe* pipe;
-	run_params* act_par = par;
+	run_params* act_par = (run_params*)malloc(sizeof(run_params));
+	memcpy_s(act_par, sizeof(run_params), par, sizeof(run_params));
+
+	int in_q = 0;
 
 	while (true) {
 		c = part[pos_part];
 
-		if (c == CMD_PIPE_CHAR) {
+		if (c == '"') in_q = 1 - in_q;
+
+		if ((c == CMD_PIPE_CHAR) && (!in_q)) {
 			cmd[pos_cmd] = '\0';
 			pos_part++;
 
@@ -134,8 +150,13 @@ int parse_part(char* part, run_params* par) {
 			pipe_out* out_new = (pipe_out*)(malloc(sizeof pipe_out));
 			pipe_create(in_new, out_new, 1, 0);
 
+			//printf("***** in: %d, out: %d, pipe: %d\n", in_new, out_new, in_new->pipe);
+
 			act_par_new->out = in_new;
 			act_par->in = out_new;
+
+			//printf("** ACT PAR: in %d (%d), out %d (%d) --- %s\n", act_par->in, act_par->in->pipe, act_par->out, act_par->out->pipe, act_par->cmd_name);
+			//printf("** ACT PAR NEW: in %d (%d), out %d (%d) --- %s\n", act_par_new->in, act_par_new->in->pipe, act_par_new->out, act_par_new->out->pipe, act_par_new->cmd_name);
 
 			int ret = parse_cmd(cmd, act_par_new, 0);
 			if (ret == 1) return 1;
@@ -147,9 +168,9 @@ int parse_part(char* part, run_params* par) {
 
 			run_params* act_par_new = (run_params*)malloc(sizeof(run_params));
 			memcpy_s(act_par_new, sizeof(run_params), act_par, sizeof(run_params));
-			act_par_new->out = par->out;
+			//act_par_new->out = act_par->out;
 
-			int ret = parse_cmd(cmd, par, 1);
+			int ret = parse_cmd(cmd, act_par_new, 1);
 			if (ret == 1) return 1;
 			return 0;
 		}
@@ -165,6 +186,9 @@ int parse_part(char* part, run_params* par) {
 }
 
 int parse_cmd(char* cmd, run_params* par, int wait) {
+
+	printf("** run: in %d (%d), out %d (%d) --- %s\n", par->in, par->in->pipe, par->out, par->out->pipe, par->cmd_name);
+
 	int pos, i;
 
 	char* cmd_itself = (char*)malloc(sizeof(char) * MAX_CMD_LEN);
@@ -213,9 +237,15 @@ int parse_cmd(char* cmd, run_params* par, int wait) {
 	if (nParams == NULL) return 3;
 
 	if (strcmp(cmd_itself, "exit") == 0) {
-
-		/* TODO */
-
+		if (par->secret_params == 2) {
+			return 1;
+		}
+		if (par->secret_params == 1) {
+			par->in->autoclose = 1;
+			par->err->autoclose = 1;
+			par->out->autoclose = 1;
+			c_run((LPTHREAD_START_ROUTINE)(c_exit), nParams, wait);
+		}
 	}
 	else if (strcmp(cmd_itself, "dir") == 0) {
 		c_run((LPTHREAD_START_ROUTINE)(dir), nParams, wait);
@@ -252,6 +282,10 @@ int parse_cmd(char* cmd, run_params* par, int wait) {
 	}
 	else if (strcmp(cmd_itself, "freq") == 0) {
 		c_run((LPTHREAD_START_ROUTINE)(freq), nParams, wait);
+	}
+	else if (strcmp(cmd_itself, "cmd") == 0) {
+		nParams->secret_params = 2;
+		c_run((LPTHREAD_START_ROUTINE)(c_cmd_run), nParams, wait);
 	}
 
 	return 0;
@@ -360,6 +394,7 @@ run_params* make_params(run_params* parent_par, char* in, char* out, char* err, 
 
 	nParams->argc = argc;
 	nParams->args = args;
+	nParams->secret_params = 0;
 
 	if (in[0] != '\0') {
 		node* node_in = get_node_by_relative_path(nParams->start_node, in);
