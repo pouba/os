@@ -11,6 +11,9 @@ int pipe_create(pipe_in* pipe_in, pipe_out* pipe_out, int ac_in, int ac_out, int
 	ret->readpos = 0;
 	ret->is_keyboard = keyboard;
 
+	ret->closed_in = 0;
+	ret->closed_out = 0;
+
 	InitializeConditionVariable(&(ret->BufferNotEmpty));
 	InitializeConditionVariable(&(ret->BufferNotFull));
 	InitializeCriticalSection(&(ret->BufferLock));
@@ -91,16 +94,28 @@ void pipe_write_s(pipe_in* pipe_in, char* s) {
 }
 
 void pipe_close_in(pipe_in* pipe_in) {
-//	printf("pipe %d - close in\n", pipe_in);
 	if (pipe_in->autoclose) {
 		pipe_write(pipe_in, -1);
+		if (pipe_in->pipe->closed_out == 1) {
+			free(pipe_in->pipe);
+		}
+		else {
+			pipe_in->pipe->closed_in = 1;
+		}
+		free(pipe_in);
 	}
 }
 
 void pipe_close_out(pipe_out* pipe_out) {
-//	printf("pipe %d - close out\n", pipe_out);
 	if (pipe_out->autoclose) {
 		while (pipe_read(pipe_out) != -1) {};
+		if (pipe_out->pipe->closed_in == 1) {
+			free(pipe_out->pipe);
+		}
+		else {
+			pipe_out->pipe->closed_out = 1;
+		}
+		free(pipe_out);
 	}
 }
 

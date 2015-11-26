@@ -12,6 +12,9 @@ typedef struct pipe_s {
 
 	int is_keyboard;
 
+	int closed_in;
+	int closed_out;
+
 	CRITICAL_SECTION BufferLock;
 	CONDITION_VARIABLE BufferNotEmpty;
 	CONDITION_VARIABLE BufferNotFull;

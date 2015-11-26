@@ -36,3 +36,5 @@ int isTextPresent(char* src, int pos, char* target);
 
 run_params* make_params(run_params* parent_par, char* in, char* out, char* err, int app, char** args, int argc, char* cmd_name);
 void* before_after(void* par);
+
+void params_free(run_params* par);

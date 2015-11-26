@@ -24,6 +24,8 @@ void* before_after(void* par) {
 	pipe_close_in(params->err);
 	pipe_close_out(params->in);
 
+	params_free(params);
+
 	return NULL;
 }
 
@@ -79,6 +81,8 @@ void c_cmd_run(run_params* params) {
 		}
 	}
 
+	free(line);
+
 	params->in->autoclose = ac_in;
 	params->out->autoclose = ac_out;
 	params->err->autoclose = ac_err;
@@ -123,20 +127,23 @@ int parse_line(char* line, run_params* par) {
 			pos_cmd++;
 			pos_line++;
 		}
-
 	}
+
+	free(cmd);
 }
 
 int parse_part(char* part, run_params* par) {
 	char* cmd = (char*)malloc(sizeof(char) * MAX_CMD_LEN);
 	int pos_part = 0, pos_cmd = 0;
 	int c;
+	int return_val;
 
 	run_params* act_par = (run_params*)malloc(sizeof(run_params));
 	memcpy_s(act_par, sizeof(run_params), par, sizeof(run_params));
 
 	int in_q = 0;
 
+	return_val = 0;
 	while (true) {
 		c = part[pos_part];
 
@@ -157,7 +164,10 @@ int parse_part(char* part, run_params* par) {
 			act_par->in = out_new;
 
 			int ret = parse_cmd(cmd, act_par_new, par, 0);
-			if (ret == 1) return 1;
+			if (ret == 1) {
+				return_val = 1;
+				goto end;
+			}
 			pos_cmd = 0;
 		}
 		else if (c == '\0') {
@@ -168,8 +178,12 @@ int parse_part(char* part, run_params* par) {
 			memcpy_s(act_par_new, sizeof(run_params), act_par, sizeof(run_params));
 
 			int ret = parse_cmd(cmd, act_par_new, par, 1);
-			if (ret == 1) return 1;
-			return 0;
+			if (ret == 1) {
+				return_val = 1;
+				goto end;
+			}
+			return_val = 0;
+			goto end;
 		}
 		else {
 			cmd[pos_cmd] = part[pos_part];
@@ -179,13 +193,16 @@ int parse_part(char* part, run_params* par) {
 
 	}
 
-	return 0;
+	end: 
+	free(cmd);
+	return return_val;
 }
 
 int parse_cmd(char* cmd, run_params* par, run_params* parent_par, int wait) {
 	//printf("*** %s ***\n", cmd);
 
 	int pos, i;
+	int return_val = 0;
 
 	char* cmd_itself = (char*)malloc(sizeof(char) * MAX_CMD_LEN);
 	char* input = (char*)malloc(sizeof(char) * MAX_PATH_LEN);
@@ -205,7 +222,10 @@ int parse_cmd(char* cmd, run_params* par, run_params* parent_par, int wait) {
 	pos = 0;
 	int ret;
 	ret = fill_string(cmd, &pos, cmd_itself);
-	if (ret != 0) return 0; // empty command
+	if (ret != 0) {
+		return_val = 0; // empty command
+		goto end;
+	}
 
 	while (1) {
 		ret = fill_string(cmd, &pos, arg);
@@ -220,7 +240,8 @@ int parse_cmd(char* cmd, run_params* par, run_params* parent_par, int wait) {
 		}
 		else {
 			if (argc >= MAX_ARGC) {
-				return 2;
+				return_val = 2;
+				goto end;
 			}
 
 			args[argc] = arg;
@@ -287,7 +308,8 @@ int parse_cmd(char* cmd, run_params* par, run_params* parent_par, int wait) {
 		c_run((LPTHREAD_START_ROUTINE)(c_non_existent), nParams, wait);
 	}
 
-	return 0;
+end: 
+	return return_val;
 }
 
 int fill_string(char* source, int* from, char* dest) {
@@ -508,4 +530,10 @@ int parse_redirects(char* cmd, int* pos, char* arg, char* in, char* out, char* e
 	}
 
 	return 2;
+}
+
+void params_free(run_params* par) {
+	free(par->cmd_name);
+	free(par->args);
+	free(par);
 }
