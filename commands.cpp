@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#define FREQ_SIZE 256
+
 void dir(run_params* par) {
 	node* n = par->start_node;
 	node** listDir = node_get_entries(n);
@@ -66,7 +68,9 @@ void random(run_params* par) {
 			break;
 		}
 
-		sprintf_s(buffer, "%d.%d\n", rand(), rand());
+		double random = ((double)rand() / (double)RAND_MAX);
+
+		sprintf_s(buffer, "%f\n", random);
 		pipe_write_s(par->out, buffer);
 	}
 }
@@ -185,23 +189,23 @@ void rm(run_params* par) {
 }
 
 void freq(run_params* par) {
-	int arr[500], i;
+	int arr[FREQ_SIZE], i;
 	char buf[50];
 
-	for (i = 0; i < 500; i++) arr[i] = 0;
+	for (i = 0; i < FREQ_SIZE; i++) arr[i] = 0;
 
 	while (true) {
 		int c = pipe_read(par->in);
 		if (c == -1) break;
 
-		if ((c < 0) || (c >= 500)) continue;
+		if ((c < 0) || (c >= FREQ_SIZE)) continue;
 
 		arr[c]++;
 	}
 
-	for (i = 0; i < 500; i++) {
+	for (i = 0; i < FREQ_SIZE; i++) {
 		if (arr[i] > 0) {
-			sprintf_s(buf, "%d - %d\n", i, arr[i]);
+			sprintf_s(buf, "0x%hhx : %d\n", i, arr[i]);
 			pipe_write_s(par->out, buf);
 		}
 	}
