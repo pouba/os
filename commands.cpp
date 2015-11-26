@@ -7,6 +7,7 @@ void dir(run_params* par) {
 	int max = node_get_entries_count(n);
 	for (i = 0; i < max; i++) {
 		pipe_write_s(par->out, listDir[i]->name);
+		if (listDir[i]->directory) pipe_write_s(par->out, "\\");
 		pipe_write_s(par->out, "\n");
 	}
 }
@@ -92,7 +93,7 @@ void type(run_params* par) {
 	}
 
 	char* filename = par->args[0];
-	node* n = get_node_by_name(par->start_node, filename);
+	node* n = node_get(filename, par->root_node, par->start_node);
 
 	if (n == NULL) {
 		pipe_write_s(par->err, "File does not exist.\n");
@@ -205,4 +206,8 @@ void freq(run_params* par) {
 
 void c_exit(run_params* par) {
 	// well, basically do nothing...
+}
+
+void c_non_existent(run_params* par) {
+	pipe_write_s(par->err, "Command does not exist.\n");
 }

@@ -24,7 +24,6 @@ void* before_after(void* par) {
 	pipe_close_in(params->err);
 	pipe_close_out(params->in);
 
-
 	return NULL;
 }
 
@@ -90,8 +89,6 @@ void write_path(run_params* params) {
 
 	pipe_write_s(params->out, path);
 	pipe_write_s(params->out, " # ");
-
-//	printf("%s # ", path);
 
 	free(path);
 }
@@ -277,6 +274,9 @@ int parse_cmd(char* cmd, run_params* par, run_params* parent_par, int wait) {
 		nParams->secret_params = 2;
 		c_run((LPTHREAD_START_ROUTINE)(c_cmd_run), nParams, wait);
 	}
+	else {
+		c_run((LPTHREAD_START_ROUTINE)(c_non_existent), nParams, wait);
+	}
 
 	return 0;
 }
@@ -368,7 +368,7 @@ int isTextPresent(char* src, int pos, char* target) {
 		if (src[pos + i] != target[i]) return 0;
 	}
 
-return 1;
+	return 1;
 }
 
 run_params* make_params(run_params* parent_par, char* in, char* out, char* err, int app, char** args, int argc, char* cmd_name) {
@@ -387,7 +387,7 @@ run_params* make_params(run_params* parent_par, char* in, char* out, char* err, 
 	nParams->secret_params = 0;
 
 	if (in[0] != '\0') {
-		node* node_in = get_node_by_relative_path(nParams->start_node, in);
+		node* node_in = node_get(in, nParams->root_node, nParams->start_node);
 		if (node_in == NULL) {
 			pipe_write_s(parent_par->err, "File not found!\n");
 			return NULL;
@@ -410,10 +410,13 @@ run_params* make_params(run_params* parent_par, char* in, char* out, char* err, 
 		}
 	}
 	if (out[0] != '\0') {
-		node* node_out = get_node_by_relative_path(nParams->start_node, out);
+		node* node_out = node_get(out, nParams->root_node, nParams->start_node);
 		if (node_out == NULL) {
-			pipe_write_s(parent_par->err, "File not found!\n");
-			return NULL;
+			node_out = node_create(out, nParams->start_node, 0);
+			if (node_out == NULL) {
+				pipe_write_s(parent_par->err, "Could not create the file!\n");
+				return NULL;
+			}
 		}
 		if (node_out->directory) {
 			pipe_write_s(parent_par->err, "Target is a directory!\n");
@@ -432,10 +435,13 @@ run_params* make_params(run_params* parent_par, char* in, char* out, char* err, 
 		}
 	}
 	if (err[0] != '\0') {
-		node* node_err = get_node_by_relative_path(nParams->start_node, err);
+		node* node_err = node_get(err, nParams->root_node, nParams->start_node);
 		if (node_err == NULL) {
-			pipe_write_s(parent_par->err, "File not found!\n");
-			return NULL;
+			node_err = node_create(err, nParams->start_node, 0);
+			if (node_err == NULL) {
+				pipe_write_s(parent_par->err, "Could not create the file!\n");
+				return NULL;
+			}
 		}
 		if (node_err->directory) {
 			pipe_write_s(parent_par->err, "Target is a directory!\n");

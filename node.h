@@ -25,6 +25,10 @@ typedef struct node_s {
 
 } node;
 
+node* node_get(char* path, node* root, node* act);
+node* node_get_by_name(node* dir, char* name);
+node* node_get_by_relative_path(node* dir, char* path);
+
 node* node_create(char* name, node* parent, int dir);
 int node_set_content(node* node, char* content, int content_len);
 int node_get_content_len(node* node);

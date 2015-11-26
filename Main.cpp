@@ -7,7 +7,8 @@ int main()
 {
 	srand((int)time(NULL));
 
-	node* root = node_create("C:", NULL, 1);
+	node* root_dir = node_create("Computer", NULL, 1);
+	node* root = node_create("C:", root_dir, 1);
 	node* n1 = node_create("n1", root, 0);
 	node* n2 = node_create("n2", root, 0);
 	node* n3 = node_create("n3", root, 0);

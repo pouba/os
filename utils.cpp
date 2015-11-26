@@ -12,7 +12,12 @@ void cd(run_params* par, run_params* parent_params) {
 		return;
 	}
 
-	node* n = get_node_by_name(parent_params->start_node, filename);
+	node* n = node_get(filename, parent_params->root_node, parent_params->start_node);
+
+	if (!n->directory) {
+		pipe_write_s(par->err, "You can not 'cd' into a file. Please specify a directory.\n");
+		return;
+	}
 
 	if (n != NULL) {
 		parent_params->start_node = n;
