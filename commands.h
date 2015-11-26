@@ -11,6 +11,7 @@ void type(run_params* par);
 void info(run_params* par);
 void mkdir(run_params* par);
 void rm(run_params* par);
+void sort(run_params* par);
 void freq(run_params* par);
 void c_exit(run_params* par);
 void c_non_existent(run_params* par);

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #define FREQ_SIZE 256
+#define SORT_SIZE 512
 
 void dir(run_params* par) {
 	node* n = par->start_node;
@@ -210,4 +211,56 @@ void c_exit(run_params* par) {
 
 void c_non_existent(run_params* par) {
 	pipe_write_s(par->err, "Command does not exist.\n");
+}
+
+int cmp_func(const void* a, const void* b);
+
+void sort(run_params* par) {
+	int i,pos, c = -1, arr_pos = 0, arr_size = 200;
+	char* buf = (char*)malloc(sizeof(char) * SORT_SIZE);
+	char** arr = (char**)malloc(sizeof(char *) * arr_size);
+
+	while (true) {
+		pos = 0;
+		while (true) {
+			c = pipe_read(par->in);
+			if ((c == 10) || (c == -1)) break;
+			buf[pos] = c;
+			if (pos == SORT_SIZE) pos = 0; // do not accept lines longer than 500
+			pos++;
+		}
+		buf[pos] = '\0';
+		arr[arr_pos++] = buf;
+		buf = (char*)malloc(sizeof(char) * SORT_SIZE);
+		if (buf == NULL) goto end;
+
+		if (arr_pos == arr_size) {
+			arr_size += 200;
+			arr = (char**)realloc(arr, sizeof(char*) * arr_size);
+		}
+
+		if (c == -1) break;
+	}
+
+	qsort(arr, arr_pos, sizeof(char*), cmp_func);
+
+	for (i = 0; i < arr_pos; i++) {
+		printf("%s\n", arr[i]);
+	}
+
+end: 
+	for (i = 0; i < arr_pos; i++) {
+		free(arr[i]);
+	}
+	free(arr);
+	return;
+}
+
+int cmp_func(const void* a, const void* b) {
+	char* ch_a = *(char**)a;
+	char* ch_b = *(char**)b;
+
+	//printf("%s - %s, %d\n", ch_a, ch_b, strcmp(ch_a, ch_b));
+
+	return strcmp(ch_a, ch_b);
 }

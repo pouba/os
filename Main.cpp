@@ -17,7 +17,7 @@ int main()
 	node* n5a = node_create("n5a", n5, 0);
 	node* n5b = node_create("n5b", n5, 0);
 
-	char* str = "n1 - aaaaaa\n";
+	char* str = "n1 - aaaaaa\nbbbb\ncccc\nfskdhjs\ndsfj\niuyffj\n\nejrwehjr\n";
 	n1->content = (char*)malloc(sizeof(char) * strlen(str)+1);
 	memcpy(n1->content, str, strlen(str)+1);
 	n1->content_len = strlen(n1->content);

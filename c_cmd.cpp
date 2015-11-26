@@ -294,6 +294,9 @@ int parse_cmd(char* cmd, run_params* par, run_params* parent_par, int wait) {
 	else if (strcmp(cmd_itself, "rm") == 0) {
 		c_run((LPTHREAD_START_ROUTINE)(rm), nParams, wait);
 	}
+	else if (strcmp(cmd_itself, "sort") == 0) {
+		c_run((LPTHREAD_START_ROUTINE)(sort), nParams, wait);
+	}
 	else if (strcmp(cmd_itself, "mkdir") == 0) {
 		c_run((LPTHREAD_START_ROUTINE)(mkdir), nParams, wait);
 	}
