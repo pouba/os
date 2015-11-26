@@ -15,8 +15,13 @@ node* node_create(char* name, node* parent, int dir) {
 		return NULL;
 	}
 
-	ret->name = name;
 	ret->name_len = strnlen_s(name, sizeof (char) * 50);
+
+	ret->name = (char*)malloc(sizeof (char) * (ret->name_len+1));
+
+	for (i = 0; i < ret->name_len+1; i++) ret->name[i] = '\0';
+	memcpy_s(ret->name, sizeof(char) * ret->name_len, name, sizeof(char) * ret->name_len);
+	ret->name[ret->name_len] = '\0';
 
 	ret->content = NULL;
 	ret->content_len = 0;
@@ -92,6 +97,52 @@ int node_add_to_dir(node* dir, node* child) {
 	}
 
 	return 0;
+}
+
+int node_delete(node* node) {
+	int ret = node_try_lock(node);
+	if (ret == 0) {
+		free(node->name);
+		free(node->content);
+		free(node);
+		return 0;
+	}
+	else {
+		return 1;
+	}
+
+}
+
+int node_delete_recursive(node* node) {
+	int ret = 0, succes;
+	if (node_try_lock(node)) {
+		if (node->directory) {
+			succes = 1;
+			for (int i = 0; i < node->entries_count; i++) {
+				if (node_delete_recursive(node->dirEntries[i]) != 0) succes = 0;
+			}
+			if (succes == 1) {
+				node_remove_from_dir(node->parent, node);
+				free(node->name);
+				free(node->dirEntries);
+				free(node);
+				return 0;
+			} else {
+				return 1;
+			}
+		}
+		else {
+			node_remove_from_dir(node->parent, node);
+			free(node->name);
+			free(node->content);
+			free(node);
+			return 0;
+		}
+	}
+	else {
+		return 1;
+	}
+
 }
 
 int node_remove_from_dir(node* dir, node* child) {

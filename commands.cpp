@@ -156,6 +156,10 @@ void mkdir(run_params* par) {
 	}
 
 	node* dir = node_create(dir_name, n, 1);
+	if (dir == NULL) {
+		pipe_write_s(par->err, "Error when creating new directory.\n");
+		return;
+	}
 }
 
 void rm(run_params* par) {
@@ -164,28 +168,17 @@ void rm(run_params* par) {
 		return;
 	}
 	char* rm_name = par->args[0];
-	node* n = par->start_node;
-	node* rm_node = NULL;
-	node** listDir = node_get_entries(n);
-	int i = 0;
-	int max = node_get_entries_count(n);
-	for (i = 0; i < max; i++) {
-		if (strcmp(rm_name, n->dirEntries[i]->name) == 0) {
-			rm_node = n->dirEntries[i];
-			break;
-		}
-	}
 
-	if (rm_node == 0) {
+	node* rm_node = node_get(rm_name, par->root_node, par->start_node);
+	if (rm_node == NULL) {
 		pipe_write_s(par->err, "File does not exist.\n");
 		return;
 	}
-	if (rm_node->directory) {
-		pipe_write_s(par->err, "File is a directory.\n");
-		return;
-	}
 
-	node_remove_from_dir(n, rm_node);
+	int ret = node_delete_recursive(rm_node);
+	if (ret != 0) {
+		pipe_write_s(par->err, "Error on recursive deleting.\n");
+	}
 }
 
 void freq(run_params* par) {

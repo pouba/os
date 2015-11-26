@@ -43,4 +43,7 @@ int node_get_entries_count(node* dir);
 int node_try_lock(node* node);
 void node_unlock(node* node);
 
+int node_delete(node* node);
+int node_delete_recursive(node* node);
+
 #endif
