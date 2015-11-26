@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-int pipe_create(pipe_in* pipe_in, pipe_out* pipe_out, int ac_in, int ac_out) {
+int pipe_create(pipe_in* pipe_in, pipe_out* pipe_out, int ac_in, int ac_out, int keyboard) {
 	pipe* ret = (pipe*)malloc(sizeof(pipe));
 
 	ret->buffer = (int*)(malloc(sizeof(int) * PIPE_BUFFER_SIZE));
@@ -9,6 +9,7 @@ int pipe_create(pipe_in* pipe_in, pipe_out* pipe_out, int ac_in, int ac_out) {
 	}
 	ret->writepos = 0;
 	ret->readpos = 0;
+	ret->is_keyboard = keyboard;
 
 	InitializeConditionVariable(&(ret->BufferNotEmpty));
 	InitializeConditionVariable(&(ret->BufferNotFull));
@@ -21,6 +22,10 @@ int pipe_create(pipe_in* pipe_in, pipe_out* pipe_out, int ac_in, int ac_out) {
 	pipe_out->autoclose = ac_out;
 
 	return 0;
+}
+
+int pipe_create(pipe_in* pipe_in, pipe_out* pipe_out, int ac_in, int ac_out) {
+	return pipe_create(pipe_in, pipe_out, ac_in, ac_out, 0);
 }
 
 int pipe_try_read(pipe_out* pipe_out) {
@@ -97,4 +102,8 @@ void pipe_close_out(pipe_out* pipe_out) {
 	if (pipe_out->autoclose) {
 		while (pipe_read(pipe_out) != -1) {};
 	}
+}
+
+int pipe_out_is_keyboard(pipe_out* pipe_out) {
+	return pipe_out->pipe->is_keyboard;
 }

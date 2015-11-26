@@ -5,7 +5,7 @@
 
 int main()
 {
-	srand(time(NULL));
+	srand((int)time(NULL));
 
 	node* root = node_create("C:", NULL, 1);
 	node* n1 = node_create("n1", root, 0);
@@ -51,7 +51,7 @@ int main()
 
 	pipe_in* in_in = (pipe_in *)malloc(sizeof(pipe_in));
 	pipe_out* in_out = (pipe_out *)malloc(sizeof(pipe_out));
-	pipe_create(in_in, in_out, 0, 0);
+	pipe_create(in_in, in_out, 0, 0, 1);
 
 	pipe_in* out_in = (pipe_in *)malloc(sizeof(pipe_in));
 	pipe_out* out_out = (pipe_out *)malloc(sizeof(pipe_out));
