@@ -59,7 +59,10 @@ void random(run_params* par) {
 
 	while (true) {
 		int c = pipe_try_read(par->in);
-		if (c == 65) {
+		if (c == -1) {
+			break;
+		}
+		if (c == 26) {
 			break;
 		}
 

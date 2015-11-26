@@ -62,7 +62,14 @@ void c_cmd_run(run_params* params) {
 			int ret = parse_line(line, params);
 			if (ret == 1) break;
 			pos = 0;
-			if (c == -1) break;
+			if (c == -1) {
+				if (params->secret_params == 1) {
+					ac_in = 1;
+					ac_out = 1;
+					ac_err = 1;
+				}
+				break;
+			}
 
 			if (out_path && pipe_out_is_keyboard(in)) write_path(params);
 		}
@@ -176,6 +183,8 @@ int parse_part(char* part, run_params* par) {
 }
 
 int parse_cmd(char* cmd, run_params* par, run_params* parent_par, int wait) {
+	//printf("*** %s ***\n", cmd);
+
 	int pos, i;
 
 	char* cmd_itself = (char*)malloc(sizeof(char) * MAX_CMD_LEN);
@@ -286,7 +295,7 @@ int fill_string(char* source, int* from, char* dest) {
 	int in_quotes = 0;
 	int i;
 
-	while (source[pos] == ' ') pos++; // ignore leading spaces
+	while ((source[pos] == ' ') || (source[pos] == 13)) pos++; // ignore leading spaces and CR
 	if (source[pos] == '\0') return 1;
 
 	// check if text starts with any redirects
@@ -324,6 +333,10 @@ int fill_string(char* source, int* from, char* dest) {
 	}
 
 	while (source[pos] != '\0') {
+		if (source[pos] == 13) {
+			pos++;
+			continue;
+		}
 
 		if (!in_quotes) {
 			if (isTextPresent(source, pos, STR_REDIRECT_IN)) break;

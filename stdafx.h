@@ -14,6 +14,8 @@
 #include <windows.h>
 #include <conio.h>
 #include <time.h>
+#include <io.h>
+#include <fcntl.h>
 
 #include "node.h"
 #include "pipe.h"

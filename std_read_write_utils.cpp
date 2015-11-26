@@ -18,6 +18,8 @@ DWORD WINAPI std_reader_func(void* data) {
 	pipe_in* p;
 	p = (pipe_in*)(data);
 
+	_setmode(_fileno(stdin), O_BINARY);
+
 	char* line = (char*)malloc(sizeof(char) * MAX_LINE_LEN);
 	int i = 0, pos = 0; 
 	for (i = 0; i < MAX_LINE_LEN; i++) {
@@ -28,9 +30,6 @@ DWORD WINAPI std_reader_func(void* data) {
 	while (true) {
 		c = getchar();
 		pipe_write(p, c);
-		if (c == -1) {
-			break;
-		}
 	}
 
 	return 0;
