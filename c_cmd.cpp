@@ -291,13 +291,13 @@ int parse_cmd(char* cmd, run_params* par, run_params* parent_par, int wait) {
 	else if (strcmp(cmd_itself, "info") == 0) {
 		c_run((LPTHREAD_START_ROUTINE)(info), nParams, wait);
 	}
-	else if (strcmp(cmd_itself, "rm") == 0) {
+	else if (strcmp(cmd_itself, "rm") == 0 || strcmp(cmd_itself, "rd") == 0) {
 		c_run((LPTHREAD_START_ROUTINE)(rm), nParams, wait);
 	}
 	else if (strcmp(cmd_itself, "sort") == 0) {
 		c_run((LPTHREAD_START_ROUTINE)(sort), nParams, wait);
 	}
-	else if (strcmp(cmd_itself, "mkdir") == 0) {
+	else if (strcmp(cmd_itself, "mkdir") == 0 || strcmp(cmd_itself, "md") == 0) {
 		c_run((LPTHREAD_START_ROUTINE)(mkdir), nParams, wait);
 	}
 	else if (strcmp(cmd_itself, "freq") == 0) {
