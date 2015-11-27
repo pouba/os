@@ -75,16 +75,56 @@
 %\end{itemize}
 
 \section{Implementace}
+\subsection{Souborový systém}
+Souborový systém je organizován do stromové struktury (v \verb+node.h+). Data jsou ukládána do souvislého bloku paměti. K souboru může přistupovat pouze jeden proces. Složka se od souboru rozlišuje příznakem  \verb+directory+. 
 
-\section{Uživatelská příručka}
-Pro spuštění programu stačí otevřít spustitelný soubor \emph{os.exe}. V terminálovém okně se zobrazí aktuální adresář, ve kterém se nacházíte. V tuto chvíli můžete zadávat příkazy.
- Implementovány jsou příkazy ze zadání a navíc jsou ještě přidány příkazy: 
+\begin{figure*}[h] 
+\centering
+ \includegraphics[width=0.75\textwidth]{./command.png}
+\caption{Parsování příkazů}
+\end{figure*}
+
+\subsection{Parser}
+Zpracování vstupu se provádí v souboru \verb+c_cmd.cpp+.
+Řádka je nejprve rozdělena na sekvenční části, které odděluje znak \verb+;+. Sekveční části se pak parsují podle rour na jednotlivé příkazy. Ze samotných příkazů se pak získá název příkazu, parametry a přesměrování.
+
+
+
+\subsection{Roura}
+Roura (\verb+pipe.h+) je implementována kruhovým bufferem. Jako synchronizační mechnanismus jsou použity dva semafory a jedna kritická sekce. Má dva handlery - jeden pro čtení, druhý pro zápis.
+
+\subsection{Seznam příkazů}
+Seznam implementovaných příkazů, které můžete zadávat do příkazové řádky:
+\label{cmd}
 \begin{itemize}
-\item  \verb+scan+, který vypisuje ascii hodnotu ze vstupu
-\item  \verb+pipe+, který vypisuje vstup na výstup
+\item cmd, echo, cd, tree
+\item dir, mkdir (md), rm (rd)
+\item freq, rand, type
+\item scan, který vypisuje ascii hodnotu ze vstupu
+\item pipe, který vypisuje vstup na výstup
+\item info, který vypíše parametry
+\item exit ukončí cmd proces
+
+Lze zadávat sekvence příkazů oddělené \verb+;+ v rámci jednoho vstupního řádku. Příkazy lze také přesměrovávat a spojovat.
 \end{itemize}
 
-Každý příkaz může být přesměrován na výstup zápisem  \verb+příkaz+ \textgreater  \verb+ soubor+ a na vstup  \verb+příkaz+ \textless  \verb+ soubor+. Lze i přesměrovat na konec souboru konstrukcí \textgreater\textgreater. Příkazy je dále možné spojovat pomocí rour pro nasměrování výstupu jednoho procesu na vstup následujícího procesu  \verb+příkaz1 | příkaz2+.
+\subsection{Spouštění příkazů}
+
+Hlavní proces cmd čte vstup, který parsuje. Pokud narazí na středník nebo novou řádku přestane parsovat vstup a zpracuje příkaz. Příkaz se parsuje podle rour. Za každý znak roury se vytvoří nová roura. První příkaz pak dostane vstup od cmd a poslední příkaz předá výstup a chybové hlašení zpátky cmd. Následně se příkazy spojí pomocí rour. Po spojení se všechny příkazy spustí a čeká se na poslední příkaz. Až doběhne předá se řízení cmd, který čte opět vstup.
+
+
+\begin{figure*}[!h] 
+\centering
+ \includegraphics[width=1\textwidth]{./flow2.png}
+\caption{Data a control flow diagram}
+\end{figure*}
+
+
+\section{Uživatelská příručka}
+Pro spuštění programu stačí otevřít spustitelný soubor \emph{os.exe}. V terminálovém okně se zobrazí aktuální adresář, ve kterém se nacházíte. V tuto chvíli můžete zadávat dostupné příkazy (viz \ref{cmd}).
+
+
+Každý příkaz může být přesměrován na výstup zápisem  \verb+příkaz > soubor+ a na vstup  \verb+příkaz< soubor+. Lze i přesměrovat na konec souboru konstrukcí \textgreater\textgreater. Příkazy je dále možné spojovat pomocí rour pro nasměrování výstupu jednoho procesu na vstup následujícího procesu  \verb+příkaz1 | příkaz2+.
 
 Ukončení čtení se provádí CTRL+Z. 
 V spuštěné příkazové řádce lze spustit další příkazovou řádku. Každá příkazová řádka se ukončuje příkazem \verb+exit+. 

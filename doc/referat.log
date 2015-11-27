@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (MiKTeX 2.9) (preloaded format=pdflatex 2014.12.7)  27 NOV 2015 00:08
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (MiKTeX 2.9) (preloaded format=pdflatex 2014.12.7)  27 NOV 2015 21:22
 entering extended mode
 **C:/Users/Pepa/Desktop/skola/OS/doc/referat.tex
 (C:/Users/Pepa/Desktop/skola/OS/doc/referat.tex
@@ -350,23 +350,39 @@ File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10> not available
 (Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 45.
-LaTeX Font Info:    Try loading font information for OML+cmr on input line 87.
+
+<./command.png, id=9, 381.425pt x 311.1625pt>
+File: ./command.png Graphic file (type png)
+ <use ./command.png>
+Package pdftex.def Info: ./command.png used on input line 83.
+(pdftex.def)             Requested size: 258.75pt x 211.09392pt.
+ [1 <C:/Users/Pepa/Desktop/skola/OS/doc/command.png (PNG copy)>]
+<./flow2.png, id=17, 602.25pt x 923.45pt>
+File: ./flow2.png Graphic file (type png)
+ <use ./flow2.png>
+Package pdftex.def Info: ./flow2.png used on input line 118.
+(pdftex.def)             Requested size: 345.0pt x 529.02101pt.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+LaTeX Font Info:    Try loading font information for OML+cmr on input line 127.
 
 ("C:\Program Files (x86)\MiKTeX 2.9\tex\latex\base\omlcmr.fd"
 File: omlcmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OML/cmr/m/n' in size <10> not available
-(Font)              Font shape `OML/cmm/m/it' tried instead on input line 87.
- [1]
+(Font)              Font shape `OML/cmm/m/it' tried instead on input line 127.
+ [2] [3 <C:/Users/Pepa/Desktop/skola/OS/doc/flow2.png (PNG copy)>]
 (C:\Users\Pepa\Desktop\skola\OS\doc\referat.aux) ) 
 Here is how much of TeX's memory you used:
- 1843 strings out of 493921
- 23174 string characters out of 3144879
- 80956 words of memory out of 3000000
- 5144 multiletter control sequences out of 15000+200000
- 6573 words of font info for 24 fonts, out of 3000000 for 9000
+ 1857 strings out of 493921
+ 23363 string characters out of 3144879
+ 82966 words of memory out of 3000000
+ 5155 multiletter control sequences out of 15000+200000
+ 6880 words of font info for 25 fonts, out of 3000000 for 9000
  841 hyphenation exceptions out of 8191
- 27i,4n,24p,534b,182s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 27i,5n,24p,576b,219s stack positions out of 5000i,500n,10000p,200000b,50000s
 <C:/Program Files (x86)/MiKTe
 X 2.9/fonts/type1/public/amsfonts/cm/cmbx10.pfb><C:/Program Files (x86)/MiKTeX 
 2.9/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Program Files (x86)/MiKTeX 2.
@@ -377,9 +393,9 @@ s/type1/public/amsfonts/cm/cmr17.pfb><C:/Program Files (x86)/MiKTeX 2.9/fonts/t
 ype1/public/amsfonts/cm/cmsy10.pfb><C:/Program Files (x86)/MiKTeX 2.9/fonts/typ
 e1/public/amsfonts/cm/cmti10.pfb><C:/Program Files (x86)/MiKTeX 2.9/fonts/type1
 /public/amsfonts/cm/cmtt10.pfb>
-Output written on referat.pdf (2 pages, 195076 bytes).
+Output written on referat.pdf (4 pages, 235382 bytes).
 PDF statistics:
- 46 PDF objects out of 1000 (max. 8388607)
+ 54 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
- 6 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 16 words of extra memory for PDF output out of 10000 (max. 10000000)
 
