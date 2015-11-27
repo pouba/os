@@ -113,15 +113,20 @@ Lze zadávat sekvence příkazů oddělené \verb+;+ v rámci jednoho vstupního
 Hlavní proces cmd čte vstup, který parsuje. Pokud narazí na středník nebo novou řádku přestane parsovat vstup a zpracuje příkaz. Příkaz se parsuje podle rour. Za každý znak roury se vytvoří nová roura. První příkaz pak dostane vstup od cmd a poslední příkaz předá výstup a chybové hlašení zpátky cmd. Následně se příkazy spojí pomocí rour. Po spojení se všechny příkazy spustí a čeká se na poslední příkaz. Až doběhne předá se řízení cmd, který čte opět vstup.
 
 
-\begin{figure*}[!h] 
+\begin{figure*}[t!] 
 \centering
  \includegraphics[width=1\textwidth]{./flow2.png}
 \caption{Data a control flow diagram}
 \end{figure*}
-\newpage
-
+\pagebreak
+\pagebreak
 \section{Uživatelská příručka}
-Pro spuštění programu stačí otevřít spustitelný soubor \emph{os.exe}. V terminálovém okně se zobrazí aktuální adresář, ve kterém se nacházíte. V tuto chvíli můžete zadávat dostupné příkazy (viz \ref{cmd}).
+\subsection{Sestavení}
+Pro sestavení nástrojem msbuild je potřeba tento nástroj mít přidaný v path.
+V adresáři, kde se nachází soubor kivos.vcxproj otevřeme příkazovou řádku a zadáme \verb+msbuild kivos.vcxproj+. Ve složce build se vytvoří spustitelný soubor.
+
+\subsection{Spuštění}
+Pro spuštění programu stačí otevřít spustitelný soubor \emph{kivos.exe}. V terminálovém okně se zobrazí aktuální adresář, ve kterém se nacházíte. V tuto chvíli můžete zadávat dostupné příkazy (viz \ref{cmd}).
 
 
 Každý příkaz může být přesměrován na výstup zápisem  \verb+příkaz > soubor+ a na vstup  \verb+příkaz< soubor+. Lze i přesměrovat na konec souboru konstrukcí \textgreater\textgreater. Příkazy je dále možné spojovat pomocí rour pro nasměrování výstupu jednoho procesu na vstup následujícího procesu  \verb+příkaz1 | příkaz2+.
