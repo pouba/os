@@ -15,6 +15,7 @@ void sort(run_params* par);
 void freq(run_params* par);
 void c_exit(run_params* par);
 void c_non_existent(run_params* par);
+void wc(run_params* par);
 
 
 void cd(run_params* par, run_params* parent_params);

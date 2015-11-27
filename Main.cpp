@@ -17,17 +17,17 @@ int main()
 	node* n5a = node_create("n5a", n5, 0);
 	node* n5b = node_create("n5b", n5, 0);
 
-	char* str = "n1 - aaaaaa\nbbbb\ncccc\nfskdhjs\ndsfj\niuyffj\n\nejrwehjr\n";
+	char* str = "n1 - aaaaaa\nbbbb\ncccc\nfskdhjs\ndsfj\niuyffj\n\n\nejrwehjr\n";
 	n1->content = (char*)malloc(sizeof(char) * strlen(str)+1);
 	memcpy(n1->content, str, strlen(str)+1);
 	n1->content_len = strlen(n1->content);
 
-	str = "n2 - 4546456\n";
+	str = "";
 	n2->content = (char*)malloc(sizeof(char) * strlen(str)+1);
 	memcpy(n2->content, str, strlen(str)+1);
 	n2->content_len = strlen(n2->content);
 
-	str = "n3 - ,m,mkjhseursjagfjhsdhj\n";
+	str = "n3 - ,m,mkjhseur\nsjagfjhsdhj\n";
 	n3->content = (char*)malloc(sizeof(char) * strlen(str)+1);
 	memcpy(n3->content, str, strlen(str)+1);
 	n3->content_len = strlen(n3->content);

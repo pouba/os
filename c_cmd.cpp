@@ -303,6 +303,9 @@ int parse_cmd(char* cmd, run_params* par, run_params* parent_par, int wait) {
 	else if (strcmp(cmd_itself, "freq") == 0) {
 		c_run((LPTHREAD_START_ROUTINE)(freq), nParams, wait);
 	}
+	else if (strcmp(cmd_itself, "wc") == 0) {
+		c_run((LPTHREAD_START_ROUTINE)(wc), nParams, wait);
+	}
 	else if (strcmp(cmd_itself, "cmd") == 0) {
 		nParams->secret_params = 2;
 		c_run((LPTHREAD_START_ROUTINE)(c_cmd_run), nParams, wait);

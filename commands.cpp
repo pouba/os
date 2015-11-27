@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "string.h"
 
 #define FREQ_SIZE 256
 #define SORT_SIZE 512
@@ -263,4 +264,69 @@ int cmp_func(const void* a, const void* b) {
 	//printf("%s - %s, %d\n", ch_a, ch_b, strcmp(ch_a, ch_b));
 
 	return strcmp(ch_a, ch_b);
+}
+
+void wc_count(run_params* par, char* str, char* filename) {
+	int i, lines = 0, words = 0, bytes = strlen(str), is_char = false;
+	char out[200];
+	for (i = 0; i < strlen(str); i++) {
+		if (str[i] == ' ' || str[i] == '\n') {
+			is_char = false;
+			if (str[i] == '\n') lines++;
+		}
+		else {
+			if (!is_char) words++;
+			is_char = true;
+		}
+	}
+
+	sprintf_s(out, "%d %d %d %s\n", lines, words, bytes, filename);
+	pipe_write_s(par->out, out);
+}
+
+void wc(run_params* par) {
+	if (par->argc >= 1) {
+		char* filename = par->args[0];
+		node* n = node_get(filename, par->root_node, par->start_node);
+
+		if (n == NULL) {
+			pipe_write_s(par->err, "File does not exist.\n");
+			return;
+		}
+		if (n->directory) {
+			pipe_write_s(par->err, "File is a directory.\n");
+			return;
+		}
+
+		if (!node_try_lock(n)) {
+			pipe_write_s(par->err, "Can't open the file.\n");
+			return;
+		}
+
+		wc_count(par, n->content, n->name);
+		node_unlock(n);
+
+	}
+	else {
+		int pos, c = -1, buf_size = 300;
+		char* buf = (char*)malloc(sizeof(char) * buf_size);
+
+		pos = 0;
+		while (true) {
+			c = pipe_read(par->in);
+			if ((c == -1)) break;
+			
+			if (pos == buf_size - 1) {
+				buf_size *= 2;
+				buf = (char*)realloc(buf, sizeof(char*) * buf_size);
+			}
+			buf[pos] = c;
+			pos++;
+		}
+		buf[pos] = '\0';
+
+		wc_count(par, buf, "");
+		free(buf);
+		buf = NULL;
+	}
 }
