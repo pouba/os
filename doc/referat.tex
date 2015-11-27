@@ -1,0 +1,100 @@
+\documentclass[a4paper]{article}
+\usepackage[czech]{babel}
+
+\usepackage[utf8]{inputenc}
+
+\usepackage{graphicx}
+\usepackage{float}
+%\usepackage{pdfpages}
+%\input kvmacros
+
+\begin{document}
+
+\begin{titlepage}
+
+\begin{center}
+
+% tituln strana
+\author{Marek Šimůnek}
+
+\includegraphics[width=0.5\textwidth]{./logo.jpg} \\[1cm]
+ 
+ \huge Semestrální práce z  KIV/OS \\ [1.5cm]
+\huge \textbf{ Simulace operačního systému}\\[0.9cm]
+{\Large \textsc{Marek Šimůnek} } {\large \textsc{A15B0082P}  } 
+
+{\Large \textsc{Jindřich Pouba }}{\large \textsc{A15B0072P}  } 
+
+{\Large \textsc{Matěj Lochman }}{\large \textsc{A15B0068P}  } 
+\\[0.9cm]
+
+
+
+
+\large \textsc  {\today}
+
+
+
+\end{center}
+
+
+\end{titlepage}
+
+\section{Zadání}
+\begin{itemize}
+\item Vytvořte virtuální stroj, který bude simulovat OS
+\item Součástí bude shell s gramatikou cmd
+\item Vytvoříte ekvivalenty standardních příkazů a programů
+\begin{itemize}
+\item echo, cd, dir, md, rd, type, wc, sort
+\item Dále vytvoříte programy rand a freq
+\item rand bude vypisovat náhodně vygenerovaná čísla v plovoucí čárce na stdout, dokud mu nepřijde znak Ctrl+Z //EOF
+\item freq bude číst z stdin a sestaví frekvenční tabulku bytů, kterou pak vypíše pro všechny byty s frekvencí větší než 0 ve formátu: 
+
+“0x\%hhx : \%d”
+\end{itemize}
+
+
+\item Implementujte roury a přesměrování
+\item Nebudete přistupovat na souborový systém, ale uděláte si prostředky simulátoru vlastní RAM-disk s názvem C
+\end{itemize}
+
+%\begin{figure*}[] 
+%\centering
+% \makebox[\textwidth]{\includegraphics[width=.9\paperwidth]{./pidalkaguide.pdf}}
+%\label{fig:Fig5}
+%\end{figure*}
+
+%\includepdf{./pidalkaguide.pdf}
+
+%\begin{itemize}
+%\item Seznamte se s konﬁgurací reálného modelu robotu s podtlakovým přisáváním.
+%\item Navrhněte algoritmy pro jednotlivé elementární kroky Píďalky (minimálně dopředu, dozadu, vlevo, vpravo).
+%\item Navrhněte graﬁcké rozhraní, pomocí kterého bude možné systém ovládat z počítače.
+%\item (volitelné) Implementujte řídicí algoritmus, pomocí kterého vykoná Píďalka předem deﬁnovanou sekvenci kroků.
+%\end{itemize}
+
+\section{Implementace}
+
+\section{Uživatelská příručka}
+Pro spuštění programu stačí otevřít spustitelný soubor \emph{os.exe}. V terminálovém okně se zobrazí aktuální adresář, ve kterém se nacházíte. V tuto chvíli můžete zadávat příkazy.
+ Implementovány jsou příkazy ze zadání a navíc jsou ještě přidány příkazy: 
+\begin{itemize}
+\item  \verb+scan+, který vypisuje ascii hodnotu ze vstupu
+\item  \verb+pipe+, který vypisuje vstup na výstup
+\end{itemize}
+
+Každý příkaz může být přesměrován na výstup zápisem  \verb+příkaz+ \textgreater  \verb+ soubor+ a na vstup  \verb+příkaz+ \textless  \verb+ soubor+. Lze i přesměrovat na konec souboru konstrukcí \textgreater\textgreater. Příkazy je dále možné spojovat pomocí rour pro nasměrování výstupu jednoho procesu na vstup následujícího procesu  \verb+příkaz1 | příkaz2+
+
+Ukončení čtení se provádí CTRL+Z. 
+V spuštěné příkazové řádce lze spustit další příkazovou řádku. Každá příkazová řádka se ukončuje příkazem \verb+exit+. 
+
+
+
+\section{Závěr}
+
+
+
+
+
+\end{document}
